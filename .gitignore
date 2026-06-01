@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing & Linting
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Environment & Secrets
+.env
+.env.local
+*.pem
+*.key
+
+# Artifacts & Local Data
+artifacts/reports/*.html
+artifacts/charts/*.html
+artifacts/charts/*.png
+artifacts/*.json
+artifacts/*.csv
+data/uploads/*
+!data/uploads/.gitkeep
+!data/customer_churn.csv
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.vscode/
+.idea/
+*.swp
