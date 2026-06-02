@@ -43,3 +43,42 @@ class EDAState(TypedDict, total=False):
     # Workflow Control
     iteration: int
     max_iterations: int
+    final_report_path: str
+    status_message: str
+    error: str | None
+
+
+def create_initial_state(
+    dataset_path: str,
+    target_column: str | None = None,
+    user_objective: str = "Perform comprehensive exploratory data analysis, evaluate quality, and generate insights.",
+    max_iterations: int = 2,
+) -> EDAState:
+    """Create a clean initialized state dict."""
+    return {
+        "dataset_path": dataset_path,
+        "dataset_name": "",
+        "target_column": target_column,
+        "user_objective": user_objective,
+        "schema": {},
+        "data_profile": {},
+        "quality_findings": [],
+        "quality_score": 100.0,
+        "analysis_plan": [],
+        "plan_reasoning": "",
+        "statistical_results": {},
+        "relationship_results": {},
+        "hypothesis_test_results": [],
+        "chart_paths": [],
+        "chart_metadata": [],
+        "validated_insights": [],
+        "actionable_recommendations": [],
+        "warnings": [],
+        "validation_passed": True,
+        "requires_further_analysis": False,
+        "iteration": 0,
+        "max_iterations": max_iterations,
+        "final_report_path": "",
+        "status_message": "Initialized",
+        "error": None,
+    }
