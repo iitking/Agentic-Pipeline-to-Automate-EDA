@@ -38,3 +38,40 @@ class AllowlistedTools:
 class SafeExecutor:
     """Executes allowlisted tools with input validation, timeout protection, and structured responses."""
 
+    def __init__(self, timeout_seconds: float = 60.0):
+        self.timeout_seconds = timeout_seconds
+
+    def execute(self, tool_name: str, kwargs: dict[str, Any]) -> dict[str, Any]:
+        """Safely execute an allowlisted tool function."""
+        if tool_name not in AllowlistedTools.REGISTRY:
+            return {
+                "success": False,
+                "tool_name": tool_name,
+                "error": f"Tool '{tool_name}' is not in the approved safe tool allowlist. Permitted tools: {AllowlistedTools.list_tools()}",
+                "result": None,
+                "execution_time_ms": 0.0,
+            }
+
+        func = AllowlistedTools.get_tool(tool_name)
+        start_time = time.time()
+
+        try:
+            # Execute tool with provided keyword arguments
+            result = func(**kwargs)
+            duration_ms = round((time.time() - start_time) * 1000, 2)
+            return {
+                "success": True,
+                "tool_name": tool_name,
+                "result": result,
+                "error": None,
+                "execution_time_ms": duration_ms,
+            }
+        except Exception as e:
+            duration_ms = round((time.time() - start_time) * 1000, 2)
+            return {
+                "success": False,
+                "tool_name": tool_name,
+                "result": None,
+                "error": f"Execution error in {tool_name}: {str(e)}",
+                "execution_time_ms": duration_ms,
+            }
