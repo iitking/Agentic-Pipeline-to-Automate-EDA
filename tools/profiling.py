@@ -137,3 +137,66 @@ def detect_column_semantic_type(
     }
 
 
+
+def infer_potential_target(df: pd.DataFrame, schema: dict[str, Any]) -> dict[str, Any] | None:
+    candidate_keywords = [
+        "target", "label", "class", "churn", "exited", "status", "outcome",
+        "survived", "default", "attrition", "converted", "is_churn", "response",
+        "sale_price", "price", "revenue", "loss", "rating", "fraud"
+    ]
+
+    candidates = []
+    for col, meta in schema["columns"].items():
+        if meta.get("is_identifier"):
+            continue
+
+        lower_col = col.lower()
+        score = 0.0
+
+        # Exact or partial match with common target keywords
+        for kw in candidate_keywords:
+            if lower_col == kw:
+                score += 0.85
+                break
+            elif kw in lower_col:
+                score += 0.5
+                break
+
+        # Suffix matching
+        if lower_col.endswith("_target") or lower_col.endswith("_label") or lower_col.endswith("_status"):
+            score += 0.7
+
+        # Placement heuristic: Often the last column
+        if col == df.columns[-1]:
+            score += 0.2
+
+        # Binary/categorical targets are very common
+        sem_type = meta["semantic_type"]
+        if sem_type in ["boolean", "categorical_numeric"] and meta["cardinality"] == 2:
+            score += 0.2
+        elif sem_type == "categorical" and 2 <= meta["cardinality"] <= 10:
+            score += 0.15
+
+        if score >= 0.5:
+            target_type = "classification" if sem_type in ["boolean", "categorical", "categorical_numeric"] or meta["cardinality"] <= 15 else "regression"
+            candidates.append({
+                "column": col,
+                "score": round(score, 2),
+                "type": target_type,
+                "semantic_type": sem_type,
+            })
+
+    if not candidates:
+        return None
+
+    # Sort descending by score
+    candidates.sort(key=lambda x: x["score"], reverse=True)
+    best = candidates[0]
+    return {
+        "column": best["column"],
+        "target_type": best["type"],
+        "confidence": best["score"],
+        "all_candidates": candidates,
+    }
+
+
