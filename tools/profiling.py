@@ -200,3 +200,67 @@ def infer_potential_target(df: pd.DataFrame, schema: dict[str, Any]) -> dict[str
     }
 
 
+
+def detect_schema(df: pd.DataFrame) -> dict[str, Any]:
+    n_rows, n_cols = df.shape
+    columns_info: dict[str, Any] = {}
+
+    numerical_cols: list[str] = []
+    categorical_cols: list[str] = []
+    datetime_cols: list[str] = []
+    identifier_cols: list[str] = []
+    text_cols: list[str] = []
+    boolean_cols: list[str] = []
+
+    for col in df.columns:
+        s = df[col]
+        semantic = detect_column_semantic_type(s, col, n_rows)
+        dtype_str = str(s.dtype)
+        null_count = int(s.isnull().sum())
+        null_pct = float(round((null_count / max(n_rows, 1)) * 100, 2))
+        n_unique = int(s.nunique(dropna=True))
+
+        col_meta = {
+            "dtype": dtype_str,
+            "semantic_type": semantic["semantic_type"],
+            "is_identifier": semantic["is_identifier"],
+            "cardinality": n_unique,
+            "unique_ratio": round(semantic["unique_ratio"], 4),
+            "null_count": null_count,
+            "null_pct": null_pct,
+            "memory_bytes": int(s.memory_usage(deep=True)),
+        }
+        columns_info[col] = col_meta
+
+        stype = semantic["semantic_type"]
+        if semantic["is_identifier"]:
+            identifier_cols.append(col)
+        elif stype in ["numerical", "categorical_numeric"]:
+            numerical_cols.append(col)
+        elif stype == "categorical":
+            categorical_cols.append(col)
+        elif stype == "datetime":
+            datetime_cols.append(col)
+        elif stype == "boolean":
+            boolean_cols.append(col)
+        elif stype == "text":
+            text_cols.append(col)
+
+    schema = {
+        "shape": {"rows": n_rows, "columns": n_cols},
+        "columns": columns_info,
+        "type_groups": {
+            "numerical": numerical_cols,
+            "categorical": categorical_cols,
+            "datetime": datetime_cols,
+            "identifier": identifier_cols,
+            "text": text_cols,
+            "boolean": boolean_cols,
+        },
+    }
+
+    inferred_target = infer_potential_target(df, schema)
+    schema["inferred_target"] = inferred_target
+    return schema
+
+
