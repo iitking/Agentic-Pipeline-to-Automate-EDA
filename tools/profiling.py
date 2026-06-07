@@ -34,7 +34,6 @@ def load_dataset(file_path: str | Path, max_rows: int | None = None) -> pd.DataF
     return df
 
 
-
 def detect_column_semantic_type(
     series: pd.Series, col_name: str, n_rows: int
 ) -> dict[str, Any]:
@@ -137,7 +136,6 @@ def detect_column_semantic_type(
     }
 
 
-
 def infer_potential_target(df: pd.DataFrame, schema: dict[str, Any]) -> dict[str, Any] | None:
     candidate_keywords = [
         "target", "label", "class", "churn", "exited", "status", "outcome",
@@ -198,7 +196,6 @@ def infer_potential_target(df: pd.DataFrame, schema: dict[str, Any]) -> dict[str
         "confidence": best["score"],
         "all_candidates": candidates,
     }
-
 
 
 def detect_schema(df: pd.DataFrame) -> dict[str, Any]:
@@ -264,3 +261,38 @@ def detect_schema(df: pd.DataFrame) -> dict[str, Any]:
     return schema
 
 
+def profile_dataset(file_path: str | Path, max_rows: int | None = None) -> dict[str, Any]:
+    df = load_dataset(file_path, max_rows=max_rows)
+    schema = detect_schema(df)
+
+    n_rows, n_cols = df.shape
+    total_cells = n_rows * n_cols
+    total_missing = int(df.isnull().sum().sum())
+    missing_rate = round((total_missing / max(total_cells, 1)) * 100, 2)
+    duplicate_rows = int(df.duplicated().sum())
+    duplicate_rate = round((duplicate_rows / max(n_rows, 1)) * 100, 2)
+    memory_mb = round(df.memory_usage(deep=True).sum() / (1024 * 1024), 2)
+
+    # Column-level high cardinality / constant detection
+    constant_columns = [col for col, meta in schema["columns"].items() if meta["cardinality"] <= 1 and n_rows > 1]
+    high_cardinality_categoricals = [
+        col for col, meta in schema["columns"].items()
+        if meta["semantic_type"] == "categorical" and meta["cardinality"] > 50
+    ]
+
+    profile = {
+        "dataset_name": Path(file_path).name,
+        "file_size_mb": round(Path(file_path).stat().st_size / (1024 * 1024), 2) if Path(file_path).exists() else 0,
+        "memory_mb": memory_mb,
+        "rows": n_rows,
+        "columns": n_cols,
+        "total_missing_cells": total_missing,
+        "missing_rate_pct": missing_rate,
+        "duplicate_rows": duplicate_rows,
+        "duplicate_rate_pct": duplicate_rate,
+        "constant_columns": constant_columns,
+        "high_cardinality_categoricals": high_cardinality_categoricals,
+        "sample_head": df.head(5).to_dict(orient="records"),
+        "schema": schema,
+    }
+    return profile
