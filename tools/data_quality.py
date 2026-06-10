@@ -142,3 +142,38 @@ def detect_numerical_outliers(df: pd.DataFrame, schema: dict[str, Any] | None = 
     return findings
 
 
+
+def detect_schema_anomalies(df: pd.DataFrame, schema: dict[str, Any]) -> list[dict[str, Any]]:
+    findings = []
+    n_rows = len(df)
+
+    for col, meta in schema.get("columns", {}).items():
+        cardinality = meta.get("cardinality", 0)
+
+        # Constant column
+        if cardinality <= 1 and n_rows > 1:
+            findings.append({
+                "id": f"DQ-CONSTANT-{col}",
+                "check": "constant_column",
+                "column": col,
+                "severity": "medium",
+                "metric": {"cardinality": cardinality},
+                "evidence": f"Column '{col}' has zero variance (only {cardinality} unique value).",
+                "recommendation": "Drop this column prior to modeling as it carries zero variance or predictive information.",
+            })
+
+        # High cardinality categorical
+        if meta.get("semantic_type") == "categorical" and cardinality > 50 and not meta.get("is_identifier"):
+            findings.append({
+                "id": f"DQ-HIGH-CARD-{col}",
+                "check": "high_cardinality",
+                "column": col,
+                "severity": "medium",
+                "metric": {"cardinality": cardinality},
+                "evidence": f"Categorical column '{col}' has high cardinality ({cardinality} distinct categories).",
+                "recommendation": "Group rare categories into an 'Other' bucket, or use target encoding rather than standard one-hot encoding.",
+            })
+
+    return findings
+
+
