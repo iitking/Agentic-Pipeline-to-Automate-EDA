@@ -82,3 +82,63 @@ def detect_duplicates(df: pd.DataFrame, schema: dict[str, Any] | None = None) ->
     return findings
 
 
+
+def detect_numerical_outliers(df: pd.DataFrame, schema: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    findings = []
+    n_rows = len(df)
+    if n_rows < 10:
+        return findings
+
+    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    if schema and "type_groups" in schema:
+        # Exclude identifiers and booleans
+        id_cols = set(schema["type_groups"].get("identifier", []))
+        bool_cols = set(schema["type_groups"].get("boolean", []))
+        numeric_cols = [c for c in numeric_cols if c not in id_cols and c not in bool_cols]
+
+    for col in numeric_cols:
+        series = df[col].dropna()
+        if len(series) < 10 or series.nunique() <= 1 or set(series.unique()).issubset({0, 1}):
+            continue
+
+        q25 = float(series.quantile(0.25))
+        q75 = float(series.quantile(0.75))
+        iqr = q75 - q25
+        if iqr == 0:
+            std = float(series.std())
+            if std == 0:
+                continue
+            mean = float(series.mean())
+            lower_bound = mean - 3 * std
+            upper_bound = mean + 3 * std
+            outliers = series[(series < lower_bound) | (series > upper_bound)]
+        else:
+            lower_bound = q25 - 1.5 * iqr
+            upper_bound = q75 + 1.5 * iqr
+            outliers = series[(series < lower_bound) | (series > upper_bound)]
+
+        outlier_count = len(outliers)
+        outlier_pct = round((outlier_count / len(series)) * 100, 2)
+
+        if outlier_count > 0:
+            severity = "high" if outlier_pct > 10 else ("medium" if outlier_pct > 3 else "low")
+            findings.append({
+                "id": f"DQ-OUTLIER-{col}",
+                "check": "outliers",
+                "column": col,
+                "severity": severity,
+                "metric": {
+                    "outlier_count": outlier_count,
+                    "outlier_pct": outlier_pct,
+                    "lower_bound": round(lower_bound, 2),
+                    "upper_bound": round(upper_bound, 2),
+                    "min": float(series.min()),
+                    "max": float(series.max()),
+                },
+                "evidence": f"Column '{col}' has {outlier_count} outliers ({outlier_pct}%) outside IQR bounds [{round(lower_bound, 2)}, {round(upper_bound, 2)}]. Extreme values: min={round(float(series.min()), 2)}, max={round(float(series.max()), 2)}.",
+                "recommendation": "Inspect extreme values to verify if they represent valid domain tail events, measurement errors, or data corruption. Consider Winsorization or robust scaling.",
+            })
+
+    return findings
+
+
