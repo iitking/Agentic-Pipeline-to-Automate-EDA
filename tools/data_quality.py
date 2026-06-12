@@ -177,3 +177,23 @@ def detect_schema_anomalies(df: pd.DataFrame, schema: dict[str, Any]) -> list[di
     return findings
 
 
+
+def calculate_data_quality_score(findings: list[dict[str, Any]], n_rows: int, n_cols: int) -> float:
+    score = 100.0
+
+    severity_penalties = {
+        "critical": 15.0,
+        "high": 8.0,
+        "medium": 3.0,
+        "low": 1.0,
+        "info": 0.0,
+    }
+
+    for f in findings:
+        sev = f.get("severity", "low")
+        penalty = severity_penalties.get(sev, 1.0)
+        score -= penalty
+
+    return max(0.0, min(100.0, round(score, 1)))
+
+
