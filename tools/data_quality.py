@@ -40,7 +40,6 @@ def detect_missing_values(df: pd.DataFrame) -> list[dict[str, Any]]:
     return findings
 
 
-
 def detect_duplicates(df: pd.DataFrame, schema: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     findings = []
     n_rows = len(df)
@@ -80,7 +79,6 @@ def detect_duplicates(df: pd.DataFrame, schema: dict[str, Any] | None = None) ->
                     })
 
     return findings
-
 
 
 def detect_numerical_outliers(df: pd.DataFrame, schema: dict[str, Any] | None = None) -> list[dict[str, Any]]:
@@ -142,7 +140,6 @@ def detect_numerical_outliers(df: pd.DataFrame, schema: dict[str, Any] | None = 
     return findings
 
 
-
 def detect_schema_anomalies(df: pd.DataFrame, schema: dict[str, Any]) -> list[dict[str, Any]]:
     findings = []
     n_rows = len(df)
@@ -177,7 +174,6 @@ def detect_schema_anomalies(df: pd.DataFrame, schema: dict[str, Any]) -> list[di
     return findings
 
 
-
 def calculate_data_quality_score(findings: list[dict[str, Any]], n_rows: int, n_cols: int) -> float:
     score = 100.0
 
@@ -197,3 +193,30 @@ def calculate_data_quality_score(findings: list[dict[str, Any]], n_rows: int, n_
     return max(0.0, min(100.0, round(score, 1)))
 
 
+def run_quality_audit(df: pd.DataFrame, schema: dict[str, Any] | None = None) -> dict[str, Any]:
+    if schema is None:
+        from tools.profiling import detect_schema
+        schema = detect_schema(df)
+
+    findings: list[dict[str, Any]] = []
+    findings.extend(detect_missing_values(df))
+    findings.extend(detect_duplicates(df, schema))
+    findings.extend(detect_numerical_outliers(df, schema))
+    findings.extend(detect_schema_anomalies(df, schema))
+
+    quality_score = calculate_data_quality_score(findings, len(df), len(df.columns))
+
+    summary = {
+        "total_issues": len(findings),
+        "critical": sum(1 for f in findings if f["severity"] == "critical"),
+        "high": sum(1 for f in findings if f["severity"] == "high"),
+        "medium": sum(1 for f in findings if f["severity"] == "medium"),
+        "low": sum(1 for f in findings if f["severity"] == "low"),
+        "quality_score": quality_score,
+    }
+
+    return {
+        "quality_score": quality_score,
+        "summary": summary,
+        "findings": findings,
+    }
