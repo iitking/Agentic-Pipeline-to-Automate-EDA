@@ -29,3 +29,26 @@ def test_detect_missing_values():
     assert c_finding["severity"] == "critical"  # 80% missing
 
 
+
+def test_detect_duplicates():
+    df = pd.DataFrame({
+        "id": [1, 2, 3, 1],
+        "val": ["x", "y", "z", "x"],
+    })
+    findings = detect_duplicates(df)
+    assert len(findings) >= 1
+    dup_row_finding = next(f for f in findings if f["id"] == "DQ-DUP-ROWS")
+    assert dup_row_finding["metric"]["duplicate_count"] == 1
+
+
+
+def test_detect_numerical_outliers():
+    # 20 points, one extreme outlier
+    data = [10.0] * 19 + [1000.0]
+    df = pd.DataFrame({"score": data})
+    findings = detect_numerical_outliers(df)
+    assert len(findings) == 1
+    assert findings[0]["column"] == "score"
+    assert findings[0]["metric"]["outlier_count"] == 1
+
+
