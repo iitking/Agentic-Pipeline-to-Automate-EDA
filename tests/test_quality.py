@@ -29,7 +29,6 @@ def test_detect_missing_values():
     assert c_finding["severity"] == "critical"  # 80% missing
 
 
-
 def test_detect_duplicates():
     df = pd.DataFrame({
         "id": [1, 2, 3, 1],
@@ -39,7 +38,6 @@ def test_detect_duplicates():
     assert len(findings) >= 1
     dup_row_finding = next(f for f in findings if f["id"] == "DQ-DUP-ROWS")
     assert dup_row_finding["metric"]["duplicate_count"] == 1
-
 
 
 def test_detect_numerical_outliers():
@@ -52,3 +50,21 @@ def test_detect_numerical_outliers():
     assert findings[0]["metric"]["outlier_count"] == 1
 
 
+def test_quality_score_calculation():
+    findings = [
+        {"severity": "critical"},
+        {"severity": "medium"},
+    ]
+    score = calculate_data_quality_score(findings, 100, 5)
+    # 100 - 15 - 3 = 82.0
+    assert score == 82.0
+
+
+def test_run_quality_audit_integration():
+    df = pd.read_csv("data/customer_churn.csv")
+    result = run_quality_audit(df)
+    assert "quality_score" in result
+    assert "summary" in result
+    assert "findings" in result
+    assert isinstance(result["findings"], list)
+    assert 0 <= result["quality_score"] <= 100
