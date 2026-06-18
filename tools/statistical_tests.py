@@ -79,3 +79,17 @@ def compute_descriptive_stats(df: pd.DataFrame, schema: dict[str, Any] | None = 
     return results
 
 
+
+def compute_cramers_v(contingency_table: pd.DataFrame) -> float:
+    chi2, _, _, _ = stats.chi2_contingency(contingency_table)
+    n = contingency_table.sum().sum()
+    if n == 0:
+        return 0.0
+    r, k = contingency_table.shape
+    min_dim = min(r - 1, k - 1)
+    if min_dim == 0:
+        return 0.0
+    v = np.sqrt(chi2 / (n * min_dim))
+    return float(round(v, 4))
+
+
