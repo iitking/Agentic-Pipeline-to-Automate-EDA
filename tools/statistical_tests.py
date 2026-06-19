@@ -167,3 +167,26 @@ def compute_correlation_matrix(
     }
 
 
+
+def test_normality(series: pd.Series) -> dict[str, Any]:
+    clean = series.dropna()
+    n = len(clean)
+    if n < 8:
+        return {"test": "none", "is_normal": False, "p_value": None, "note": "Sample size too small (n < 8)"}
+
+    if n <= 5000:
+        stat, p = stats.shapiro(clean)
+        test_name = "Shapiro-Wilk"
+    else:
+        stat, p = stats.normaltest(clean)
+        test_name = "D'Agostino-Pearson"
+
+    return {
+        "test": test_name,
+        "statistic": round(float(stat), 4),
+        "p_value": round(float(p), 6),
+        "is_normal": bool(p > 0.05),
+        "sample_size": n,
+    }
+
+
