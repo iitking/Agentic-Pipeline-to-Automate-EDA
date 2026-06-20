@@ -190,3 +190,59 @@ def test_normality(series: pd.Series) -> dict[str, Any]:
     }
 
 
+
+def compare_two_groups(
+    group1: pd.Series, group2: pd.Series, group1_name: str, group2_name: str, feature_name: str
+) -> dict[str, Any]:
+    g1 = group1.dropna()
+    g2 = group2.dropna()
+    n1, n2 = len(g1), len(g2)
+
+    if n1 < 5 or n2 < 5:
+        return {
+            "feature": feature_name,
+            "test_type": "insufficient_sample",
+            "p_value": None,
+            "limitation": f"Sample sizes too small (n1={n1}, n2={n2}) for reliable testing.",
+        }
+
+    norm1 = test_normality(g1)["is_normal"]
+    norm2 = test_normality(g2)["is_normal"]
+    is_normal = norm1 and norm2
+
+    mean1, mean2 = float(g1.mean()), float(g2.mean())
+    median1, median2 = float(g1.median()), float(g2.median())
+
+    if is_normal:
+        # Check equal variance
+        _, lew_p = stats.levene(g1, g2)
+        equal_var = bool(lew_p > 0.05)
+        t_stat, p_val = stats.ttest_ind(g1, g2, equal_var=equal_var)
+        test_name = "Two-Sample t-test" if equal_var else "Welch's t-test"
+
+        # Cohen's d effect size
+        s_pooled = np.sqrt(((n1 - 1) * g1.var() + (n2 - 1) * g2.var()) / (n1 + n2 - 2))
+        effect_size = (mean1 - mean2) / s_pooled if s_pooled > 0 else 0.0
+        effect_label = "large" if abs(effect_size) > 0.8 else ("medium" if abs(effect_size) > 0.5 else "small")
+    else:
+        # Mann-Whitney U test
+        u_stat, p_val = stats.mannwhitneyu(g1, g2, alternative="two-sided")
+        test_name = "Mann-Whitney U test (non-parametric)"
+        # Rank-biserial correlation
+        effect_size = 1 - (2 * u_stat) / (n1 * n2)
+        effect_label = "large" if abs(effect_size) > 0.5 else ("medium" if abs(effect_size) > 0.3 else "small")
+
+    return {
+        "feature": feature_name,
+        "test_name": test_name,
+        "group1": {"name": str(group1_name), "n": n1, "mean": round(mean1, 2), "median": round(median1, 2)},
+        "group2": {"name": str(group2_name), "n": n2, "mean": round(mean2, 2), "median": round(median2, 2)},
+        "p_value": round(float(p_val), 6),
+        "is_significant": bool(p_val < 0.05),
+        "effect_size": round(float(effect_size), 4),
+        "effect_label": effect_label,
+        "assumptions_checked": "Normality and variance equality tested",
+        "caveat": "Statistical significance does not prove causal relationship; external confounding factors may exist.",
+    }
+
+
