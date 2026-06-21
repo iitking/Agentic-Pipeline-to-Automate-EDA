@@ -246,3 +246,28 @@ def compare_two_groups(
     }
 
 
+
+def run_chi_square_test(series1: pd.Series, series2: pd.Series, name1: str, name2: str) -> dict[str, Any]:
+    ct = pd.crosstab(series1, series2)
+    if ct.shape[0] < 2 or ct.shape[1] < 2:
+        return {"test_name": "Chi-Square", "error": "Insufficient categories for 2D contingency table."}
+
+    chi2, p_val, dof, expected = stats.chi2_contingency(ct)
+    min_expected = float(np.min(expected))
+    low_expected_warning = min_expected < 5.0
+    cramers_v = compute_cramers_v(ct)
+
+    return {
+        "feature_a": name1,
+        "feature_b": name2,
+        "test_name": "Chi-Square Test of Independence",
+        "chi2_statistic": round(float(chi2), 4),
+        "p_value": round(float(p_val), 6),
+        "degrees_of_freedom": int(dof),
+        "is_significant": bool(p_val < 0.05),
+        "cramers_v": cramers_v,
+        "min_expected_frequency": round(min_expected, 2),
+        "assumption_warning": "Warning: Some expected frequencies < 5; results should be interpreted cautiously." if low_expected_warning else "Standard assumptions satisfied.",
+    }
+
+
