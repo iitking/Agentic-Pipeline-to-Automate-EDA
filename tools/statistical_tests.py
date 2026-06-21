@@ -79,7 +79,6 @@ def compute_descriptive_stats(df: pd.DataFrame, schema: dict[str, Any] | None = 
     return results
 
 
-
 def compute_cramers_v(contingency_table: pd.DataFrame) -> float:
     chi2, _, _, _ = stats.chi2_contingency(contingency_table)
     n = contingency_table.sum().sum()
@@ -91,7 +90,6 @@ def compute_cramers_v(contingency_table: pd.DataFrame) -> float:
         return 0.0
     v = np.sqrt(chi2 / (n * min_dim))
     return float(round(v, 4))
-
 
 
 def compute_correlation_matrix(
@@ -167,7 +165,6 @@ def compute_correlation_matrix(
     }
 
 
-
 def test_normality(series: pd.Series) -> dict[str, Any]:
     clean = series.dropna()
     n = len(clean)
@@ -188,7 +185,6 @@ def test_normality(series: pd.Series) -> dict[str, Any]:
         "is_normal": bool(p > 0.05),
         "sample_size": n,
     }
-
 
 
 def compare_two_groups(
@@ -246,7 +242,6 @@ def compare_two_groups(
     }
 
 
-
 def run_chi_square_test(series1: pd.Series, series2: pd.Series, name1: str, name2: str) -> dict[str, Any]:
     ct = pd.crosstab(series1, series2)
     if ct.shape[0] < 2 or ct.shape[1] < 2:
@@ -271,3 +266,37 @@ def run_chi_square_test(series1: pd.Series, series2: pd.Series, name1: str, name
     }
 
 
+def run_hypothesis_tests(
+    df: pd.DataFrame, target_column: str | None = None, schema: dict[str, Any] | None = None
+) -> list[dict[str, Any]]:
+    tests_performed: list[dict[str, Any]] = []
+
+    if target_column and target_column in df.columns:
+        target_series = df[target_column].dropna()
+        n_unique_target = target_series.nunique()
+
+        # Binary classification target comparison
+        if n_unique_target == 2:
+            classes = list(target_series.unique())
+            c0, c1 = classes[0], classes[1]
+            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+            if schema and "type_groups" in schema:
+                id_cols = set(schema["type_groups"].get("identifier", []))
+                numeric_cols = [c for c in numeric_cols if c not in id_cols and c != target_column]
+
+            for col in numeric_cols[:10]:
+                g0 = df[df[target_column] == c0][col]
+                g1 = df[df[target_column] == c1][col]
+                res = compare_two_groups(g0, g1, f"{target_column}={c0}", f"{target_column}={c1}", col)
+                if "p_value" in res and res["p_value"] is not None:
+                    tests_performed.append(res)
+
+            # Categorical features against binary target (Chi-Square)
+            cat_cols = df.select_dtypes(include=["object", "string", "category"]).columns.tolist()
+            for cat_col in cat_cols[:5]:
+                if 2 <= df[cat_col].nunique() <= 10:
+                    cs_res = run_chi_square_test(df[cat_col], df[target_column], cat_col, target_column)
+                    if "chi2_statistic" in cs_res:
+                        tests_performed.append(cs_res)
+
+    return tests_performed
