@@ -31,7 +31,6 @@ def test_compute_descriptive_stats():
     assert cat_stats["unique_count"] == 3
 
 
-
 def test_compute_correlation_matrix():
     x = np.linspace(1, 100, 50)
     y = 2 * x + np.random.normal(0, 2, 50)
@@ -42,7 +41,6 @@ def test_compute_correlation_matrix():
     assert "spearman" in res
     r = res["pearson"]["x"]["y"]
     assert r > 0.9  # Strong positive correlation
-
 
 
 def test_compare_two_groups_welch_or_mannwhitney():
@@ -56,3 +54,18 @@ def test_compare_two_groups_welch_or_mannwhitney():
     assert res["effect_label"] == "large"
 
 
+def test_cramers_v_metric():
+    ct = pd.DataFrame([[50, 5], [5, 50]], index=["X1", "X2"], columns=["Y1", "Y2"])
+    v = compute_cramers_v(ct)
+    assert 0.5 <= v <= 1.0
+
+
+def test_hypothesis_tests_with_churn_data():
+    df = pd.read_csv("data/customer_churn.csv")
+    tests = run_hypothesis_tests(df, target_column="Exited")
+    assert isinstance(tests, list)
+    assert len(tests) > 0
+    # Check that each test has valid statistics
+    for t in tests:
+        if "p_value" in t and t["p_value"] is not None:
+            assert 0.0 <= t["p_value"] <= 1.0
