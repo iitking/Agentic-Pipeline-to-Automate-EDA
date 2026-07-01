@@ -92,3 +92,45 @@ def plot_correlation_heatmap(
     }
 
 
+
+def plot_distributions(
+    df: pd.DataFrame, output_dir: Path, schema: dict[str, Any] | None = None, max_plots: int = 4
+) -> list[dict[str, Any]]:
+    charts = []
+    num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    if schema and "type_groups" in schema:
+        id_cols = set(schema["type_groups"].get("identifier", []))
+        num_cols = [c for c in num_cols if c not in id_cols]
+
+    for col in num_cols[:max_plots]:
+        series = df[col].dropna()
+        if series.nunique() <= 2:
+            continue
+
+        fig = px.histogram(
+            df,
+            x=col,
+            marginal="box",
+            nbins=30,
+            title=f"Distribution of {col}",
+            template="plotly_white",
+            color_discrete_sequence=["#2563EB"],
+        )
+        fig.update_layout(margin=dict(l=20, r=20, t=50, b=20), height=350)
+
+        file_name = f"dist_{col.lower().replace(' ', '_')}.html"
+        file_path = output_dir / file_name
+        fig.write_html(str(file_path), include_plotlyjs="cdn", full_html=False)
+
+        charts.append({
+            "chart_type": "distribution_histogram",
+            "title": f"Distribution: {col}",
+            "file_path": str(file_path),
+            "html_content": fig.to_html(include_plotlyjs=False, full_html=False),
+            "columns": [col],
+            "description": f"Histogram and boxplot showing spread, skew, and potential outliers in {col}.",
+        })
+
+    return charts
+
+
