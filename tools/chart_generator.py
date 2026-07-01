@@ -134,3 +134,49 @@ def plot_distributions(
     return charts
 
 
+
+def plot_categorical_breakdowns(
+    df: pd.DataFrame, output_dir: Path, schema: dict[str, Any] | None = None, max_plots: int = 3
+) -> list[dict[str, Any]]:
+    charts = []
+    cat_cols = df.select_dtypes(include=["object", "string", "category"]).columns.tolist()
+    if schema and "type_groups" in schema:
+        id_cols = set(schema["type_groups"].get("identifier", []))
+        cat_cols = [c for c in cat_cols if c not in id_cols]
+
+    for col in cat_cols[:max_plots]:
+        if df[col].nunique() > 25:
+            continue
+
+        counts = df[col].value_counts().reset_index()
+        counts.columns = [col, "Count"]
+
+        fig = px.bar(
+            counts.head(10),
+            x=col,
+            y="Count",
+            title=f"Category Counts: {col}",
+            template="plotly_white",
+            color="Count",
+            color_continuous_scale="Blues",
+            text="Count",
+        )
+        fig.update_layout(margin=dict(l=20, r=20, t=50, b=20), height=350)
+        fig.update_traces(textposition="outside")
+
+        file_name = f"cat_{col.lower().replace(' ', '_')}.html"
+        file_path = output_dir / file_name
+        fig.write_html(str(file_path), include_plotlyjs="cdn", full_html=False)
+
+        charts.append({
+            "chart_type": "categorical_bar",
+            "title": f"Categorical Count: {col}",
+            "file_path": str(file_path),
+            "html_content": fig.to_html(include_plotlyjs=False, full_html=False),
+            "columns": [col],
+            "description": f"Frequency distribution across distinct levels of {col}.",
+        })
+
+    return charts
+
+
