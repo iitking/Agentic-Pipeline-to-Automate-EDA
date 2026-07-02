@@ -180,3 +180,74 @@ def plot_categorical_breakdowns(
     return charts
 
 
+
+def plot_target_relationships(
+    df: pd.DataFrame, target_column: str, output_dir: Path, schema: dict[str, Any] | None = None
+) -> list[dict[str, Any]]:
+    charts = []
+    if target_column not in df.columns:
+        return charts
+
+    target_s = df[target_column].dropna()
+    is_binary_or_multiclass = target_s.nunique() <= 10
+
+    if is_binary_or_multiclass:
+        # 1. Target distribution pie/donut chart
+        val_counts = target_s.value_counts().reset_index()
+        val_counts.columns = ["Target_Class", "Count"]
+
+        fig = px.pie(
+            val_counts,
+            names="Target_Class",
+            values="Count",
+            hole=0.4,
+            title=f"Target Class Balance: {target_column}",
+            template="plotly_white",
+            color_discrete_sequence=px.colors.qualitative.Set2,
+        )
+        fig.update_layout(margin=dict(l=20, r=20, t=50, b=20), height=350)
+
+        file_path = output_dir / f"target_distribution_{target_column}.html"
+        fig.write_html(str(file_path), include_plotlyjs="cdn", full_html=False)
+
+        charts.append({
+            "chart_type": "target_distribution",
+            "title": f"Target Class Distribution: {target_column}",
+            "file_path": str(file_path),
+            "html_content": fig.to_html(include_plotlyjs=False, full_html=False),
+            "columns": [target_column],
+            "description": f"Class proportion and balance analysis for target variable {target_column}.",
+        })
+
+        # 2. Box plots of key numeric features grouped by target
+        num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+        if schema and "type_groups" in schema:
+            id_cols = set(schema["type_groups"].get("identifier", []))
+            num_cols = [c for c in num_cols if c not in id_cols and c != target_column]
+
+        for col in num_cols[:3]:
+            fig_box = px.box(
+                df,
+                x=target_column,
+                y=col,
+                color=target_column,
+                title=f"{col} across {target_column} Groups",
+                template="plotly_white",
+            )
+            fig_box.update_layout(margin=dict(l=20, r=20, t=50, b=20), height=350)
+
+            file_box = output_dir / f"target_box_{col.lower().replace(' ', '_')}.html"
+            fig_box.write_html(str(file_box), include_plotlyjs="cdn", full_html=False)
+
+            charts.append({
+                "chart_type": "target_feature_box",
+                "title": f"{col} by {target_column}",
+                "file_path": str(file_box),
+                "html_content": fig_box.to_html(include_plotlyjs=False, full_html=False),
+                "columns": [col, target_column],
+                "description": f"Comparative distribution of {col} segmented by {target_column}.",
+            })
+
+    return charts
+
+
