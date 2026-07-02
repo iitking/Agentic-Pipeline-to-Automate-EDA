@@ -13,7 +13,6 @@ def ensure_output_dir(dir_path: str | Path) -> Path:
     return p
 
 
-
 def plot_missing_values(df: pd.DataFrame, output_dir: Path) -> dict[str, Any] | None:
     null_counts = df.isnull().sum()
     null_cols = null_counts[null_counts > 0]
@@ -49,7 +48,6 @@ def plot_missing_values(df: pd.DataFrame, output_dir: Path) -> dict[str, Any] | 
         "columns": pcts["Column"].tolist(),
         "description": f"Missing value distribution across {len(null_cols)} affected columns.",
     }
-
 
 
 def plot_correlation_heatmap(
@@ -92,7 +90,6 @@ def plot_correlation_heatmap(
     }
 
 
-
 def plot_distributions(
     df: pd.DataFrame, output_dir: Path, schema: dict[str, Any] | None = None, max_plots: int = 4
 ) -> list[dict[str, Any]]:
@@ -132,7 +129,6 @@ def plot_distributions(
         })
 
     return charts
-
 
 
 def plot_categorical_breakdowns(
@@ -178,7 +174,6 @@ def plot_categorical_breakdowns(
         })
 
     return charts
-
 
 
 def plot_target_relationships(
@@ -251,3 +246,36 @@ def plot_target_relationships(
     return charts
 
 
+def generate_eda_charts(
+    df: pd.DataFrame,
+    output_dir: str | Path,
+    target_column: str | None = None,
+    schema: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    out_dir = ensure_output_dir(output_dir)
+    generated_charts: list[dict[str, Any]] = []
+
+    # 1. Missing values overview
+    missing_chart = plot_missing_values(df, out_dir)
+    if missing_chart:
+        generated_charts.append(missing_chart)
+
+    # 2. Correlation heatmap
+    heatmap_chart = plot_correlation_heatmap(df, out_dir, schema)
+    if heatmap_chart:
+        generated_charts.append(heatmap_chart)
+
+    # 3. Numeric distributions
+    dist_charts = plot_distributions(df, out_dir, schema)
+    generated_charts.extend(dist_charts)
+
+    # 4. Categorical breakdowns
+    cat_charts = plot_categorical_breakdowns(df, out_dir, schema)
+    generated_charts.extend(cat_charts)
+
+    # 5. Target-specific analysis if present
+    if target_column:
+        target_charts = plot_target_relationships(df, target_column, out_dir, schema)
+        generated_charts.extend(target_charts)
+
+    return generated_charts
