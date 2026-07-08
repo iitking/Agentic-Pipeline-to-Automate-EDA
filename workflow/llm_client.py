@@ -33,3 +33,38 @@ class LLMClient:
 
     def generate_json(self, system_prompt: str, user_prompt: str, fallback_generator: Any = None) -> dict[str, Any]:
         """Generate structured JSON response using available LLM, falling back to heuristic generator."""
+        if self.provider == "gemini" and self.gemini_key:
+            try:
+                return self._call_gemini(system_prompt, user_prompt)
+            except Exception as e:
+                logger.warning(f"Gemini API call failed: {e}. Using heuristic fallback.")
+
+        elif self.provider == "openai" and self.openai_key:
+            try:
+                return self._call_openai(system_prompt, user_prompt)
+            except Exception as e:
+                logger.warning(f"OpenAI API call failed: {e}. Using heuristic fallback.")
+
+        # Heuristic fallback
+        if fallback_generator and callable(fallback_generator):
+            return fallback_generator()
+
+        return {}
+
+    def _call_gemini(self, system_prompt: str, user_prompt: str) -> dict[str, Any]:
+        """Call Google Gemini model."""
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=self.gemini_key)
+            model_name = self.model or "gemini-1.5-flash"
+            model = genai.GenerativeModel(
+                model_name=model_name,
+                system_instruction=system_prompt,
+                generation_config={"response_mime_type": "application/json"},
+            )
+            response = model.generate_content(user_prompt)
+            return json.loads(response.text)
+        except Exception:
+            # Try new google.genai SDK
+            from google import genai as new_genai
+            client = new_genai.Client(api_key=self.gemini_key)
