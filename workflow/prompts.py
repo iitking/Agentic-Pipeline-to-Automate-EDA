@@ -23,3 +23,23 @@ Dataset Profile:
 Target Variable: {target_column}
 User Objective: {user_objective}
 Current Iteration: {iteration}
+
+Respond with a JSON object with this exact structure:
+{{
+  "reasoning": "Brief explanation of why these tasks were selected for this dataset",
+  "tasks": [
+    {{
+      "task_name": "string (one of: run_quality_checks, run_statistical_analysis, generate_visualizations, analyze_relationships)",
+      "priority": "high | medium | low",
+      "reason": "specific reason based on dataset characteristics",
+      "parameters": {{}}
+    }}
+  ]
+}}
+"""
+
+INSIGHT_SYNTHESIS_SYSTEM_PROMPT = """You are an expert Data Science Insight Agent.
+Your task is to interpret verified Python-calculated analytics into clear, business-relevant, and statistically sound insights.
+
+CRITICAL SAFETY & RELIABILITY RULES:
+1. ONLY cite exact numbers, percentages, means, medians, p-values, and correlations provided in the computed tool results.
