@@ -68,3 +68,27 @@ class LLMClient:
             # Try new google.genai SDK
             from google import genai as new_genai
             client = new_genai.Client(api_key=self.gemini_key)
+            model_name = self.model or "gemini-2.5-flash"
+            response = client.models.generate_content(
+                model=model_name,
+                contents=f"{system_prompt}\n\n{user_prompt}",
+                config={"response_mime_type": "application/json"},
+            )
+            return json.loads(response.text)
+
+    def _call_openai(self, system_prompt: str, user_prompt: str) -> dict[str, Any]:
+        """Call OpenAI model."""
+        from openai import OpenAI
+        client = OpenAI(api_key=self.openai_key)
+        model_name = self.model or "gpt-4o-mini"
+        response = client.chat.completions.create(
+            model=model_name,
+            response_format={"type": "json_object"},
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.2,
+        )
+        content = response.choices[0].message.content or "{}"
+        return json.loads(content)
