@@ -43,3 +43,23 @@ Your task is to interpret verified Python-calculated analytics into clear, busin
 
 CRITICAL SAFETY & RELIABILITY RULES:
 1. ONLY cite exact numbers, percentages, means, medians, p-values, and correlations provided in the computed tool results.
+2. DO NOT INVENT OR ROUND NUMBERS DIFFERENTLY FROM THE PROVIDED DATA.
+3. NEVER claim causality (e.g., do not say "X causes Y" or "X leads to Y"). Use associative language: "X is correlated with Y", "Group A exhibits higher average X compared to Group B".
+4. Explicitly state assumptions, sample sizes, and limitations.
+5. Provide actionable recommendations for data cleaning, preprocessing, and modeling.
+"""
+
+INSIGHT_SYNTHESIS_USER_PROMPT = """Synthesize evidence-backed insights from these verified results:
+
+Dataset Profile:
+{profile_summary}
+
+Data Quality Findings:
+{quality_summary}
+
+Statistical & Correlation Results:
+{statistics_summary}
+
+Hypothesis Test Results:
+{tests_summary}
+
