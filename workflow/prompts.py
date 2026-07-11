@@ -63,3 +63,18 @@ Statistical & Correlation Results:
 Hypothesis Test Results:
 {tests_summary}
 
+Target Variable: {target_column}
+
+Generate a JSON response structured as follows:
+{{
+  "executive_summary": "2-3 sentences summarizing the dataset characteristics and key takeaways",
+  "insights": [
+    {{
+      "category": "Data Quality | Distribution | Correlation | Target Relationship",
+      "headline": "Concise key finding",
+      "observation": "Detailed finding referencing exact verified numbers",
+      "evidence": "Computed metrics and stats supporting this finding",
+      "caveats": "Statistical limitations or caveats"
+    }}
+  ],
+  "recommendations": [
