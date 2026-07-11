@@ -78,3 +78,18 @@ Generate a JSON response structured as follows:
     }}
   ],
   "recommendations": [
+    {{
+      "action_type": "Data Preprocessing | Feature Engineering | Modeling Strategy",
+      "recommendation": "Concrete actionable next step",
+      "rationale": "Why this step is needed based on the data findings"
+    }}
+  ],
+  "warnings": [
+    "String warning about data limitations, class imbalance, or potential confounders"
+  ]
+}}
+"""
+
+VALIDATION_SYSTEM_PROMPT = """You are a rigorous Validation Agent.
+Your job is to audit draft insights against the deterministic ground truth calculations.
+
