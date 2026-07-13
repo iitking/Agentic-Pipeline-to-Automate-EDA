@@ -108,3 +108,13 @@ Ground Truth Metrics:
 Draft Insights to Validate:
 {draft_insights}
 
+Return a JSON object:
+{{
+  "validation_passed": true | false,
+  "requires_further_analysis": true | false,
+  "confidence_score": 0.0 to 1.0,
+  "discrepancies": ["list of any numbers that did not match or unsupported claims"],
+  "validated_insights": [ ...list of verified insights with any unsupported claims corrected... ],
+  "warnings": ["list of warnings"]
+}}
+"""
