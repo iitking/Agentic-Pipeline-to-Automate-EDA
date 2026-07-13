@@ -93,3 +93,18 @@ Generate a JSON response structured as follows:
 VALIDATION_SYSTEM_PROMPT = """You are a rigorous Validation Agent.
 Your job is to audit draft insights against the deterministic ground truth calculations.
 
+Rules:
+1. Check that every numerical claim in the insight matches the calculated ground truth.
+2. Flag any unsupported causal claims.
+3. If an insight contradicts the data, reject or correct it.
+4. Decide if further analysis is required or if findings are sufficient to publish the report.
+"""
+
+VALIDATION_USER_PROMPT = """Compare these draft insights against the ground truth metrics:
+
+Ground Truth Metrics:
+{ground_truth_metrics}
+
+Draft Insights to Validate:
+{draft_insights}
+
