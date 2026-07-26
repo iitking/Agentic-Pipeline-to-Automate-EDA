@@ -1,4 +1,3 @@
-"""Insight Synthesis and Reporting Agent."""
 
 from typing import Any
 from workflow.state import EDAState
@@ -7,13 +6,11 @@ from workflow.llm_client import LLMClient
 
 
 class InsightAgent:
-    """Agent that translates statistical outputs into evidence-backed business insights and recommendations."""
 
     def __init__(self, llm_client: LLMClient | None = None):
         self.llm = llm_client or LLMClient()
 
     def _generate_heuristic_insights(self, state: EDAState) -> dict[str, Any]:
-        """Generate deterministic, statistically grounded insights when LLM is unavailable."""
         profile = state.get("data_profile", {})
         quality_findings = state.get("quality_findings", [])
         quality_score = state.get("quality_score", 100.0)
@@ -108,3 +105,52 @@ class InsightAgent:
 
         exec_summary = (
             f"Dataset '{profile.get('dataset_name', '')}' contains {profile.get('rows', 0)} records across "
+            f"{profile.get('columns', 0)} attributes. Data quality health is rated {quality_score}/100. "
+            f"{'Target variable ' + str(target) + ' was analyzed with ' + str(len(sig_tests)) + ' statistically significant associations identified.' if target else 'General exploratory analysis revealed key distribution and correlation structures.'}"
+        )
+
+        return {
+            "executive_summary": exec_summary,
+            "insights": insights,
+            "recommendations": recommendations,
+            "warnings": warnings,
+        }
+
+    def run(self, state: EDAState) -> dict[str, Any]:
+        heuristic_res = self._generate_heuristic_insights(state)
+
+        # If LLM available, enhance with LLM synthesis
+        if self.llm.provider in ["gemini", "openai"]:
+            try:
+                prof_summary = f"{state.get('data_profile', {}).get('rows')} rows, {state.get('data_profile', {}).get('columns')} columns."
+                q_summary = f"Score: {state.get('quality_score')}, Issues: {len(state.get('quality_findings', []))}"
+                s_summary = str(state.get("statistical_results", {}))[:1200]
+                t_summary = str(state.get("hypothesis_test_results", []))[:1200]
+
+                user_prompt = INSIGHT_SYNTHESIS_USER_PROMPT.format(
+                    profile_summary=prof_summary,
+                    quality_summary=q_summary,
+                    statistics_summary=s_summary,
+                    tests_summary=t_summary,
+                    target_column=state.get("target_column") or "None",
+                )
+                llm_res = self.llm.generate_json(
+                    system_prompt=INSIGHT_SYNTHESIS_SYSTEM_PROMPT,
+                    user_prompt=user_prompt,
+                    fallback_generator=lambda: heuristic_res,
+                )
+                if "insights" in llm_res and llm_res["insights"]:
+                    heuristic_res["insights"] = llm_res["insights"]
+                if "recommendations" in llm_res and llm_res["recommendations"]:
+                    heuristic_res["recommendations"] = llm_res["recommendations"]
+                if "executive_summary" in llm_res and llm_res["executive_summary"]:
+                    heuristic_res["executive_summary"] = llm_res["executive_summary"]
+            except Exception:
+                pass
+
+        return {
+            "validated_insights": heuristic_res["insights"],
+            "actionable_recommendations": heuristic_res["recommendations"],
+            "warnings": heuristic_res.get("warnings", []),
+            "status_message": f"Synthesized {len(heuristic_res['insights'])} validated insights and {len(heuristic_res['recommendations'])} recommendations.",
+        }
