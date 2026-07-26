@@ -58,3 +58,53 @@ class InsightAgent:
             insights.append({
                 "category": "Distribution",
                 "headline": f"Notable Asymmetry in Numerical Distributions: {len(skewed_cols)} skewed features",
+                "observation": f"The following features deviate significantly from a normal distribution: {skew_details}.",
+                "evidence": f"Evaluated using Fisher-Pearson skewness coefficient (|skew| > 0.5).",
+                "caveats": "Linear models assume normality in residuals, not necessarily raw features, but extreme skew can inflate leverage.",
+            })
+            recommendations.append({
+                "action_type": "Feature Engineering",
+                "recommendation": f"Apply log1p or Yeo-Johnson power transformation to skewed features ({', '.join(skewed_cols[:3])}).",
+                "rationale": "Stabilizes variance and reduces the impact of heavy tails on distance-based and linear estimators.",
+            })
+
+        # 3. Correlation insight
+        corrs = stats_data.get("correlations", {}).get("top_numeric_correlations", [])
+        if corrs:
+            top_corr = corrs[0]
+            insights.append({
+                "category": "Correlation",
+                "headline": f"Strongest Feature Pairwise Association: {top_corr['feature_a']} and {top_corr['feature_b']}",
+                "observation": f"{top_corr['feature_a']} and {top_corr['feature_b']} exhibit a {top_corr['strength']} {top_corr['direction']} correlation (Pearson r = {top_corr['pearson_r']}).",
+                "evidence": f"Spearman rank correlation r_s = {top_corr['spearman_r']}.",
+                "caveats": "Correlation indicates linear or monotonic co-movement, not causal dependence.",
+            })
+            if abs(top_corr["pearson_r"]) > 0.8:
+                recommendations.append({
+                    "action_type": "Feature Engineering",
+                    "recommendation": f"Inspect potential multicollinearity between {top_corr['feature_a']} and {top_corr['feature_b']}.",
+                    "rationale": "High collinearity (>0.8) inflates parameter variance in regression models.",
+                })
+
+        # 4. Target relationship insight
+        sig_tests = [t for t in hyp_tests if t.get("is_significant")]
+        if sig_tests and target:
+            t0 = sig_tests[0]
+            feat = t0.get("feature") or t0.get("feature_a")
+            p_val = t0.get("p_value")
+            eff = t0.get("effect_label", "moderate")
+            insights.append({
+                "category": "Target Relationship",
+                "headline": f"Significant Divergence in {feat} Across {target} Classes",
+                "observation": f"Feature '{feat}' demonstrated statistically significant variation between '{target}' segments (p-value = {p_val}, {eff} effect size).",
+                "evidence": f"Evaluated using {t0.get('test_name')}. Group 1 mean: {t0.get('group1', {}).get('mean')}, Group 2 mean: {t0.get('group2', {}).get('mean')}.",
+                "caveats": "Statistical significance does not prove that changing this feature will directly alter the target outcome.",
+            })
+            recommendations.append({
+                "action_type": "Modeling Strategy",
+                "recommendation": f"Include '{feat}' as a primary candidate feature in baseline predictive models for '{target}'.",
+                "rationale": f"Demonstrated empirical discriminatory power with p < 0.05.",
+            })
+
+        exec_summary = (
+            f"Dataset '{profile.get('dataset_name', '')}' contains {profile.get('rows', 0)} records across "
