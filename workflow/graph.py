@@ -32,3 +32,13 @@ def profile_dataset_node(state: EDAState) -> dict[str, Any]:
     return dataset_agent.run(state)
 
 
+
+def plan_analysis_node(state: EDAState) -> dict[str, Any]:
+    return planner_agent.run(state)
+
+
+
+def run_quality_checks_node(state: EDAState) -> dict[str, Any]:
+    return quality_agent.run(state)
+
+
