@@ -42,3 +42,13 @@ def run_quality_checks_node(state: EDAState) -> dict[str, Any]:
     return quality_agent.run(state)
 
 
+
+def run_statistical_analysis_node(state: EDAState) -> dict[str, Any]:
+    return statistics_agent.run(state)
+
+
+
+def generate_visualizations_node(state: EDAState) -> dict[str, Any]:
+    return visualization_agent.run(state)
+
+
