@@ -62,3 +62,17 @@ def synthesize_insights_node(state: EDAState) -> dict[str, Any]:
     return insight_agent.run(state)
 
 
+
+def validate_findings_node(state: EDAState) -> dict[str, Any]:
+    return validation_agent.run(state)
+
+
+
+def generate_report_node(state: EDAState) -> dict[str, Any]:
+    report_path = report_generator.generate_report(state)
+    return {
+        "final_report_path": report_path,
+        "status_message": f"EDA complete! Report saved at {report_path}",
+    }
+
+
