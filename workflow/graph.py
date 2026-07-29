@@ -52,3 +52,13 @@ def generate_visualizations_node(state: EDAState) -> dict[str, Any]:
     return visualization_agent.run(state)
 
 
+
+def analyze_relationships_node(state: EDAState) -> dict[str, Any]:
+    return relationship_agent.run(state)
+
+
+
+def synthesize_insights_node(state: EDAState) -> dict[str, Any]:
+    return insight_agent.run(state)
+
+
