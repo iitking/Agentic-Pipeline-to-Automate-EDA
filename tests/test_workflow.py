@@ -23,3 +23,12 @@ def test_safe_executor_allowlist_enforcement():
     assert "shape" in res_allowed["result"]
 
 
+
+def test_initial_state_builder():
+    state = create_initial_state("data/customer_churn.csv", target_column="Exited")
+    assert state["dataset_path"] == "data/customer_churn.csv"
+    assert state["target_column"] == "Exited"
+    assert state["iteration"] == 0
+    assert state["max_iterations"] == 2
+
+
