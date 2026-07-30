@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated EDA Report - {{ state.data_profile.dataset_name }}</title>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-light: #dbeafe;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: var(--bg); color: var(--text-main); line-height: 1.6; padding: 2rem 1rem; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; padding: 2.5rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        header h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+        header p { font-size: 1.05rem; opacity: 0.9; }
+        .meta-bar { display: flex; gap: 1.5rem; margin-top: 1.5rem; flex-wrap: wrap; font-size: 0.9rem; }
+        .meta-pill { background: rgba(255, 255, 255, 0.2); padding: 0.35rem 0.85rem; border-radius: 20px; backdrop-filter: blur(4px); }
+        
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card-stat { font-size: 2rem; font-weight: 700; color: var(--primary); margin: 0.5rem 0; }
+        .card-label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+        
+        section { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        h2 { font-size: 1.5rem; color: #1e293b; margin-bottom: 1.25rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; }
+        h3 { font-size: 1.2rem; margin: 1.5rem 0 0.75rem 0; color: #334155; }
+        
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+        th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: #f1f5f9; font-weight: 600; color: #475569; }
+        tr:hover { background: #f8fafc; }
+        
+        .badge { display: inline-block; padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+        .badge-critical { background: #fee2e2; color: #b91c1c; }
+        .badge-high { background: #ffedd5; color: #c2410c; }
+        .badge-medium { background: #fef3c7; color: #b45309; }
+        .badge-low { background: #e0f2fe; color: #0369a1; }
+        
+        .insight-card { border-left: 4px solid var(--primary); background: #f8fafc; padding: 1.25rem; border-radius: 0 8px 8px 0; margin-bottom: 1rem; }
+        .insight-headline { font-weight: 700; color: #1e293b; font-size: 1.05rem; margin-bottom: 0.35rem; }
+        .insight-obs { font-size: 0.95rem; margin-bottom: 0.5rem; }
+        .insight-evidence { font-size: 0.85rem; color: var(--text-muted); font-style: italic; }
+        .insight-caveat { font-size: 0.85rem; color: #b45309; margin-top: 0.25rem; }
+        
+        .chart-container { margin: 1.5rem 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: white; padding: 1rem; }
+        .warning-box { background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid var(--warning); padding: 1rem; border-radius: 6px; margin: 1rem 0; font-size: 0.9rem; }
+        footer { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: 3rem; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Exploratory Data Analysis Report</h1>
+        <p>Comprehensive Agentic Evaluation & Evidence-Backed Profile</p>
+        <div class="meta-bar">
+            <span class="meta-pill">📁 Dataset: <strong>{{ state.data_profile.dataset_name }}</strong></span>
+            <span class="meta-pill">🎯 Target: <strong>{{ state.target_column or 'None (Unsupervised)' }}</strong></span>
+            <span class="meta-pill">📊 Rows: <strong>{{ state.data_profile.rows }}</strong></span>
+            <span class="meta-pill">📑 Features: <strong>{{ state.data_profile.columns }}</strong></span>
+            <span class="meta-pill">🛡️ Quality Score: <strong>{{ state.quality_score }}/100</strong></span>
+        </div>
+    </header>
+
+    <!-- Key Metrics Cards -->
+    <div class="grid-cards">
+        <div class="card">
+            <div class="card-label">Dataset Records</div>
+            <div class="card-stat">{{ state.data_profile.rows }}</div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">{{ state.data_profile.columns }} features</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Data Quality Score</div>
+            <div class="card-stat" style="color: {% if state.quality_score >= 80 %}var(--success){% elif state.quality_score >= 60 %}var(--warning){% else %}var(--danger){% endif %};">
+                {{ state.quality_score }}<span style="font-size: 1.2rem;">/100</span>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">{{ state.quality_findings|length }} issues flagged</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Missing Cell Rate</div>
+            <div class="card-stat">{{ state.data_profile.missing_rate_pct }}%</div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">{{ state.data_profile.total_missing_cells }} missing values</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Duplicate Rows</div>
+            <div class="card-stat">{{ state.data_profile.duplicate_rows }}</div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">{{ state.data_profile.duplicate_rate_pct }}% duplicate rate</div>
+        </div>
+    </div>
+
+    <!-- Verified Insights Section -->
+    <section>
+        <h2>💡 Verified Insights & Findings</h2>
+        {% for ins in state.validated_insights %}
+        <div class="insight-card">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.25rem;">
+                <span class="insight-headline">{{ ins.headline }}</span>
+                <span class="badge badge-low">{{ ins.category }}</span>
+            </div>
+            <div class="insight-obs">{{ ins.observation }}</div>
+            <div class="insight-evidence">Evidence: {{ ins.evidence }}</div>
+            {% if ins.caveats %}
+            <div class="insight-caveat">⚠️ Caveat: {{ ins.caveats }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </section>
+
+    <!-- Data Quality Audit -->
+    <section>
