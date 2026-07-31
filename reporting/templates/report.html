@@ -118,3 +118,63 @@
 
     <!-- Data Quality Audit -->
     <section>
+        <h2>🛡️ Data Quality Audit</h2>
+        {% if state.quality_findings %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Check Type</th>
+                    <th>Column</th>
+                    <th>Severity</th>
+                    <th>Evidence</th>
+                    <th>Recommended Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for finding in state.quality_findings %}
+                <tr>
+                    <td><strong>{{ finding.check }}</strong></td>
+                    <td><code>{{ finding.column }}</code></td>
+                    <td><span class="badge badge-{{ finding.severity }}">{{ finding.severity }}</span></td>
+                    <td>{{ finding.evidence }}</td>
+                    <td style="font-size: 0.85rem;">{{ finding.recommendation }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color: var(--success); font-weight: 500;">✓ No data quality issues detected.</p>
+        {% endif %}
+    </section>
+
+    <!-- Schema Overview -->
+    <section>
+        <h2>📑 Schema & Column Inferences</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Column Name</th>
+                    <th>Dtype</th>
+                    <th>Semantic Type</th>
+                    <th>Null Count (%)</th>
+                    <th>Unique Values</th>
+                    <th>Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for col, meta in state.schema.columns.items() %}
+                <tr>
+                    <td><strong>{{ col }}</strong></td>
+                    <td><code>{{ meta.dtype }}</code></td>
+                    <td>{{ meta.semantic_type }}</td>
+                    <td>{{ meta.null_count }} ({{ meta.null_pct }}%)</td>
+                    <td>{{ meta.cardinality }}</td>
+                    <td>
+                        {% if meta.is_identifier %}
+                        <span class="badge badge-low">Identifier</span>
+                        {% elif col == state.target_column %}
+                        <span class="badge badge-critical">Target</span>
+                        {% else %}
+                        Feature
+                        {% endif %}
+                    </td>
