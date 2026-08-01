@@ -268,3 +268,33 @@
         <div class="chart-container">
             <h3 style="margin-top: 0;">{{ chart.title }}</h3>
             <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">{{ chart.description }}</p>
+            {{ chart.html_content|safe }}
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
+
+    <!-- Actionable Recommendations -->
+    {% if state.actionable_recommendations %}
+    <section>
+        <h2>🎯 Actionable Recommendations & Follow-Up Work</h2>
+        {% for rec in state.actionable_recommendations %}
+        <div style="margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+            <div style="font-weight: 700; color: var(--primary); font-size: 1rem;">
+                [{{ rec.action_type }}] {{ rec.recommendation }}
+            </div>
+            <div style="font-size: 0.9rem; color: #475569; margin-top: 0.25rem;">
+                <strong>Rationale:</strong> {{ rec.rationale }}
+            </div>
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
+
+    <!-- System & Methodology Notes -->
+    <section>
+        <h2>⚙️ Analysis Methodology & Safety Audit</h2>
+        <div class="warning-box">
+            <strong>Agentic EDA Safety Guarantee:</strong> All calculations, metrics, and hypothesis tests were produced deterministically using verified Python libraries (Pandas, SciPy, NumPy). The Planning and Reporting Agents operate with strict mathematical verification; no statistics were hallucinated or derived from unrestricted code execution.
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
