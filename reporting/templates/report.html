@@ -178,3 +178,53 @@
                         Feature
                         {% endif %}
                     </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Statistical Summaries -->
+    {% if state.statistical_results.descriptive.numerical %}
+    <section>
+        <h2>📈 Descriptive Statistics (Numerical Features)</h2>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Mean</th>
+                        <th>Std</th>
+                        <th>Median</th>
+                        <th>Min</th>
+                        <th>Max</th>
+                        <th>IQR</th>
+                        <th>Skewness</th>
+                        <th>Shape</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for col, stats in state.statistical_results.descriptive.numerical.items() %}
+                    <tr>
+                        <td><strong>{{ col }}</strong></td>
+                        <td>{{ stats.mean }}</td>
+                        <td>{{ stats.std }}</td>
+                        <td>{{ stats.median }}</td>
+                        <td>{{ stats.min }}</td>
+                        <td>{{ stats.max }}</td>
+                        <td>{{ stats.iqr }}</td>
+                        <td>{{ stats.skewness }}</td>
+                        <td><span class="badge badge-low">{{ stats.skew_type }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Target & Hypothesis Testing -->
+    {% if state.hypothesis_test_results %}
+    <section>
+        <h2>🔬 Hypothesis Testing & Feature Associations</h2>
+        <table>
