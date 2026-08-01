@@ -228,3 +228,43 @@
     <section>
         <h2>🔬 Hypothesis Testing & Feature Associations</h2>
         <table>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>Statistical Test</th>
+                    <th>p-value</th>
+                    <th>Significant (α=0.05)</th>
+                    <th>Effect Size</th>
+                    <th>Interpretation Caveat</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for test in state.hypothesis_test_results %}
+                <tr>
+                    <td><strong>{{ test.feature or test.feature_a }}</strong></td>
+                    <td>{{ test.test_name }}</td>
+                    <td><code>{{ test.p_value }}</code></td>
+                    <td>
+                        {% if test.is_significant %}
+                        <span class="badge badge-critical">Yes (p &lt; 0.05)</span>
+                        {% else %}
+                        <span class="badge badge-low">No</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ test.effect_size or test.cramers_v or 'N/A' }} ({{ test.effect_label or 'N/A' }})</td>
+                    <td style="font-size: 0.85rem; color: var(--text-muted);">{{ test.caveat or test.assumption_warning }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+    {% endif %}
+
+    <!-- Visualizations Section -->
+    {% if state.chart_metadata %}
+    <section>
+        <h2>📊 Interactive Visualizations</h2>
+        {% for chart in state.chart_metadata %}
+        <div class="chart-container">
+            <h3 style="margin-top: 0;">{{ chart.title }}</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">{{ chart.description }}</p>
