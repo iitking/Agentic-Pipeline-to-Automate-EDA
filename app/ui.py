@@ -38,3 +38,43 @@ data_source = st.sidebar.radio(
 )
 
 dataset_path = None
+df_preview = None
+
+if data_source == "Use Sample Dataset":
+    sample_file = "data/customer_churn.csv"
+    if Path(sample_file).exists():
+        dataset_path = sample_file
+        st.sidebar.success(f"Loaded: `{sample_file}`")
+        df_preview = load_dataset(sample_file)
+    else:
+        st.sidebar.error("Sample dataset not found.")
+else:
+    uploaded_file = st.sidebar.file_uploader(
+        "Upload CSV, Excel, or Parquet",
+        type=["csv", "xlsx", "xls", "parquet"],
+    )
+    if uploaded_file is not None:
+        upload_dir = Path("data/uploads")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        save_path = upload_dir / uploaded_file.name
+        with open(save_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+        dataset_path = str(save_path)
+        df_preview = load_dataset(dataset_path)
+        st.sidebar.success(f"Uploaded: `{uploaded_file.name}`")
+
+if df_preview is not None:
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🎯 Analysis Objective")
+    
+    # Auto-detect target column candidate
+    schema_quick = detect_schema(df_preview)
+    inferred_target = schema_quick.get("inferred_target")
+    candidate_name = inferred_target.get("column") if inferred_target else None
+
+    cols = ["None (Unsupervised / General EDA)"] + list(df_preview.columns)
+    default_idx = cols.index(candidate_name) if candidate_name in cols else 0
+
+    target_choice = st.sidebar.selectbox(
+        "Target Variable (Optional)",
+        cols,
