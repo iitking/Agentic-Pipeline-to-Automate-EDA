@@ -118,3 +118,33 @@ if df_preview is not None:
             status.update(label="✅ Agentic EDA Analysis Completed Successfully!", state="complete", expanded=False)
 
     # Render results if present in session state
+    if "eda_state" in st.session_state:
+        state = st.session_state["eda_state"]
+
+        # Top metric row
+        m1, m2, m3, m4, m5 = st.columns(5)
+        prof = state.get("data_profile", {})
+        q_score = state.get("quality_score", 100)
+
+        m1.metric("Rows", f"{prof.get('rows', 0):,}")
+        m2.metric("Features", prof.get("columns", 0))
+        m3.metric("Quality Score", f"{q_score}/100")
+        m4.metric("Missing Rate", f"{prof.get('missing_rate_pct', 0)}%")
+        m5.metric("Duplicate Rows", prof.get("duplicate_rows", 0))
+
+        # Main tabs
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+            "💡 Insights",
+            "🛡️ Quality Audit",
+            "📑 Schema",
+            "📈 Statistics",
+            "🔬 Relationships & Tests",
+            "📊 Charts",
+            "📥 Report Export",
+        ])
+
+        with tab1:
+            st.subheader("💡 Verified Insights")
+            for ins in state.get("validated_insights", []):
+                with st.expander(f"**[{ins.get('category', 'Finding')}]** {ins.get('headline', '')}", expanded=True):
+                    st.write(ins.get("observation", ""))
