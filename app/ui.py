@@ -78,3 +78,43 @@ if df_preview is not None:
     target_choice = st.sidebar.selectbox(
         "Target Variable (Optional)",
         cols,
+        index=default_idx,
+        help="Select a target to trigger group comparisons, class balance checks, and hypothesis testing.",
+    )
+    selected_target = None if target_choice.startswith("None") else target_choice
+
+    user_objective = st.sidebar.text_area(
+        "Analysis Goal / Prompt",
+        value=f"Perform comprehensive EDA{' focused on predicting ' + selected_target if selected_target else ''}, evaluate data quality, and identify actionable patterns.",
+        height=90,
+    )
+
+    max_iter = st.sidebar.slider("Max Feedback Iterations", 1, 3, 2)
+
+    # Run button
+    run_btn = st.sidebar.button("🚀 Run Agentic EDA", type="primary", use_container_width=True)
+
+    if run_btn and dataset_path:
+        with st.status("Running Agentic EDA Workflow...", expanded=True) as status:
+            st.write("🔍 **Phase 1:** Profiling dataset and inferring column schemas...")
+            st.write("🧠 **Phase 2:** Planning specialized analysis tasks...")
+            st.write("🛡️ **Phase 3:** Executing data quality audit (missingness, duplicates, outliers)...")
+            st.write("📈 **Phase 4:** Computing statistical distributions and correlation matrices...")
+            st.write("🎨 **Phase 5:** Generating interactive Plotly charts...")
+            if selected_target:
+                st.write(f"🔬 **Phase 6:** Analyzing relationships against target `{selected_target}`...")
+            st.write("💡 **Phase 7:** Synthesizing evidence-backed insights and recommendations...")
+            st.write("⚖️ **Phase 8:** Validating findings against deterministic calculations...")
+            st.write("📑 **Phase 9:** Compiling final report and exporting artifacts...")
+
+            # Run pipeline
+            final_state = run_eda_pipeline(
+                dataset_path=dataset_path,
+                target_column=selected_target,
+                user_objective=user_objective,
+                max_iterations=max_iter,
+            )
+            st.session_state["eda_state"] = final_state
+            status.update(label="✅ Agentic EDA Analysis Completed Successfully!", state="complete", expanded=False)
+
+    # Render results if present in session state
