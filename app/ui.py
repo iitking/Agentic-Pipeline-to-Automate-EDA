@@ -148,3 +148,33 @@ if df_preview is not None:
             for ins in state.get("validated_insights", []):
                 with st.expander(f"**[{ins.get('category', 'Finding')}]** {ins.get('headline', '')}", expanded=True):
                     st.write(ins.get("observation", ""))
+                    st.caption(f"**Evidence:** {ins.get('evidence', '')}")
+                    if ins.get("caveats"):
+                        st.info(f"**Caveat:** {ins.get('caveats', '')}")
+
+            st.subheader("🎯 Actionable Next Steps")
+            for rec in state.get("actionable_recommendations", []):
+                st.markdown(f"- **[{rec.get('action_type', 'Action')}]** {rec.get('recommendation', '')}")
+                st.caption(f"Rationale: {rec.get('rationale', '')}")
+
+        with tab2:
+            st.subheader(f"🛡️ Data Quality Audit (Score: {q_score}/100)")
+            findings = state.get("quality_findings", [])
+            if findings:
+                q_df = pd.DataFrame(findings)[["check", "column", "severity", "evidence", "recommendation"]]
+                st.dataframe(q_df, use_container_width=True)
+            else:
+                st.success("No quality issues identified.")
+
+        with tab3:
+            st.subheader("📑 Dataset Schema & Inferred Column Types")
+            cols_meta = state.get("schema", {}).get("columns", {})
+            if cols_meta:
+                schema_df = pd.DataFrame.from_dict(cols_meta, orient="index")
+                st.dataframe(schema_df[["dtype", "semantic_type", "cardinality", "null_count", "null_pct", "is_identifier"]], use_container_width=True)
+
+        with tab4:
+            st.subheader("📈 Numerical Feature Descriptive Statistics")
+            num_stats = state.get("statistical_results", {}).get("descriptive", {}).get("numerical", {})
+            if num_stats:
+                stat_df = pd.DataFrame.from_dict(num_stats, orient="index")
