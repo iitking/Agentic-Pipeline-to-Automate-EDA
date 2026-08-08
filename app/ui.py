@@ -178,3 +178,28 @@ if df_preview is not None:
             num_stats = state.get("statistical_results", {}).get("descriptive", {}).get("numerical", {})
             if num_stats:
                 stat_df = pd.DataFrame.from_dict(num_stats, orient="index")
+                st.dataframe(stat_df[["mean", "std", "median", "min", "max", "iqr", "skewness", "skew_type"]], use_container_width=True)
+
+            st.subheader("🔗 Top Feature Correlations")
+            corrs = state.get("statistical_results", {}).get("correlations", {}).get("top_numeric_correlations", [])
+            if corrs:
+                st.dataframe(pd.DataFrame(corrs), use_container_width=True)
+
+        with tab5:
+            st.subheader("🔬 Statistical Hypothesis Tests")
+            tests = state.get("hypothesis_test_results", [])
+            if tests:
+                st.dataframe(pd.DataFrame(tests), use_container_width=True)
+            else:
+                st.info("Hypothesis tests run automatically when a target variable is selected.")
+
+        with tab6:
+            st.subheader("📊 Interactive Visualizations")
+            charts = state.get("chart_metadata", [])
+            if charts:
+                for c in charts:
+                    st.markdown(f"#### {c.get('title', 'Chart')}")
+                    st.caption(c.get("description", ""))
+                    html_path = c.get("file_path")
+                    if html_path and Path(html_path).exists():
+                        with open(html_path, "r", encoding="utf-8") as f:
