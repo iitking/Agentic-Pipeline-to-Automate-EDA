@@ -203,3 +203,29 @@ if df_preview is not None:
                     html_path = c.get("file_path")
                     if html_path and Path(html_path).exists():
                         with open(html_path, "r", encoding="utf-8") as f:
+                            st.components.v1.html(f.read(), height=420, scrolling=True)
+            else:
+                st.info("No charts generated yet.")
+
+        with tab7:
+            st.subheader("📥 Download Generated EDA Artifacts")
+            report_file = state.get("final_report_path")
+            if report_file and Path(report_file).exists():
+                with open(report_file, "r", encoding="utf-8") as f:
+                    report_html = f.read()
+
+                st.download_button(
+                    label="📄 Download HTML Report",
+                    data=report_html,
+                    file_name="eda_report.html",
+                    mime="text/html",
+                    type="primary",
+                )
+                st.success(f"Report artifact ready at `{report_file}`.")
+            else:
+                st.warning("Report has not been generated yet.")
+
+    else:
+        st.info("👈 Select your dataset and click **Run Agentic EDA** to begin analysis.")
+        st.subheader("Dataset Preview")
+        st.dataframe(df_preview.head(10), use_container_width=True)
