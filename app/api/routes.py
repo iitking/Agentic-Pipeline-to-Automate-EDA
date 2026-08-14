@@ -133,3 +133,18 @@ def get_job_report(job_id: str, format: str = "json"):
     result = job["result"]
     if format.lower() == "html":
         report_path = result.get("final_report_path")
+        if report_path and Path(report_path).exists():
+            with open(report_path, "r", encoding="utf-8") as f:
+                return HTMLResponse(content=f.read())
+        raise HTTPException(status_code=404, detail="HTML report file missing")
+
+    return {
+        "job_id": job_id,
+        "dataset_name": result.get("dataset_name"),
+        "quality_score": result.get("quality_score"),
+        "insights": result.get("validated_insights"),
+        "recommendations": result.get("actionable_recommendations"),
+        "warnings": result.get("warnings"),
+        "report_path": result.get("final_report_path"),
+    }
+
