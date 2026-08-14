@@ -93,3 +93,43 @@ def start_analysis(req: AnalyzeRequest, background_tasks: BackgroundTasks):
     background_tasks.add_task(
         run_pipeline_task,
         job_id,
+        req.file_path,
+        req.target_column,
+        req.user_objective,
+        req.max_iterations,
+    )
+
+    return {
+        "job_id": job_id,
+        "status": "queued",
+        "message": "Analysis started in background.",
+    }
+
+
+@router.get("/api/status/{job_id}")
+def get_job_status(job_id: str):
+    """Check status of an analysis job."""
+    if job_id not in JOBS:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    job = JOBS[job_id]
+    return {
+        "job_id": job_id,
+        "status": job["status"],
+        "error": job.get("error"),
+    }
+
+
+@router.get("/api/report/{job_id}")
+def get_job_report(job_id: str, format: str = "json"):
+    """Get report result as JSON or HTML."""
+    if job_id not in JOBS:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    job = JOBS[job_id]
+    if job["status"] != "completed":
+        return {"status": job["status"], "message": "Analysis not yet completed"}
+
+    result = job["result"]
+    if format.lower() == "html":
+        report_path = result.get("final_report_path")
