@@ -43,3 +43,38 @@ def run_cli(args):
     print(f"🚀 Running Agentic EDA on: {dataset_path}")
     if args.target:
         print(f"🎯 Target Variable: {args.target}")
+    print(f"=======================================================\n")
+
+    result = run_eda_pipeline(
+        dataset_path=dataset_path,
+        target_column=args.target,
+        user_objective=args.objective,
+        max_iterations=args.iterations,
+    )
+
+    print("\n-------------------------------------------------------")
+    print(f"✅ EDA Completed Successfully!")
+    print(f"📊 Dataset Shape: {result.get('data_profile', {}).get('rows')} rows, {result.get('data_profile', {}).get('columns')} columns")
+    print(f"🛡️ Data Quality Score: {result.get('quality_score')}/100")
+    print(f"💡 Key Insights Generated: {len(result.get('validated_insights', []))}")
+    print(f"📑 Report Path: {result.get('final_report_path')}")
+    print("-------------------------------------------------------\n")
+
+    for i, ins in enumerate(result.get("validated_insights", []), 1):
+        print(f"{i}. [{ins.get('category')}] {ins.get('headline')}")
+        print(f"   {ins.get('observation')}")
+
+    print(f"\nView full interactive HTML report at:\nfile://{Path(result.get('final_report_path', '')).resolve()}\n")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Agentic Pipeline to Automate EDA")
+    parser.add_argument("--file", "-f", type=str, help="Path to CSV, Excel, or Parquet file")
+    parser.add_argument("--target", "-t", type=str, default=None, help="Target variable name (optional)")
+    parser.add_argument("--objective", "-o", type=str, default="Perform comprehensive EDA, identify data quality problems, and generate verified insights.", help="Analysis objective")
+    parser.add_argument("--iterations", type=int, default=2, help="Max planning feedback iterations")
+    parser.add_argument("--serve", action="store_true", help="Start FastAPI REST backend server")
+    parser.add_argument("--ui", action="store_true", help="Launch Streamlit interactive web dashboard")
+    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host for FastAPI server")
+    parser.add_argument("--port", type=int, default=8000, help="Port for FastAPI server")
+
