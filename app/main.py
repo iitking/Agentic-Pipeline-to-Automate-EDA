@@ -78,3 +78,29 @@ def main():
     parser.add_argument("--host", type=str, default="0.0.0.0", help="Host for FastAPI server")
     parser.add_argument("--port", type=int, default=8000, help="Port for FastAPI server")
 
+    args = parser.parse_args()
+
+    if args.serve:
+        import uvicorn
+        print(f"Starting FastAPI server on {args.host}:{args.port}...")
+        uvicorn.run("app.main:app", host=args.host, port=args.port, reload=False)
+    elif args.ui:
+        print("Launching Streamlit UI...")
+        ui_path = Path(__file__).parent / "ui.py"
+        subprocess.run(["streamlit", "run", str(ui_path)])
+    elif args.file:
+        run_cli(args)
+    else:
+        # Default demo run on sample data if available
+        sample_path = Path("data/customer_churn.csv")
+        if sample_path.exists():
+            print("No arguments provided. Running demonstration on sample customer churn dataset...\n")
+            args.file = str(sample_path)
+            args.target = "Exited"
+            run_cli(args)
+        else:
+            parser.print_help()
+
+
+if __name__ == "__main__":
+    main()
