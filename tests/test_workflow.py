@@ -32,3 +32,34 @@ def test_initial_state_builder():
     assert state["max_iterations"] == 2
 
 
+
+def test_end_to_end_eda_pipeline_execution():
+    dataset_file = "data/customer_churn.csv"
+    assert Path(dataset_file).exists()
+
+    final_state = run_eda_pipeline(
+        dataset_path=dataset_file,
+        target_column="Exited",
+        user_objective="Analyze churn indicators and evaluate data quality",
+        max_iterations=1,
+    )
+
+    # Verify pipeline state completion
+    assert final_state["data_profile"]["rows"] > 0
+    assert "quality_score" in final_state
+    assert len(final_state["quality_findings"]) > 0
+    assert len(final_state["analysis_plan"]) > 0
+    assert len(final_state["validated_insights"]) > 0
+    assert len(final_state["chart_paths"]) > 0
+
+    # Verify report generated on disk
+    report_path = Path(final_state["final_report_path"])
+    assert report_path.exists()
+    assert report_path.stat().st_size > 0
+
+    # Verify summary artifacts on disk
+    assert Path("artifacts/dataset_profile.json").exists()
+    assert Path("artifacts/quality_report.json").exists()
+    assert Path("artifacts/summary_statistics.csv").exists()
+
+
