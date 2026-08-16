@@ -23,14 +23,12 @@ def test_safe_executor_allowlist_enforcement():
     assert "shape" in res_allowed["result"]
 
 
-
 def test_initial_state_builder():
     state = create_initial_state("data/customer_churn.csv", target_column="Exited")
     assert state["dataset_path"] == "data/customer_churn.csv"
     assert state["target_column"] == "Exited"
     assert state["iteration"] == 0
     assert state["max_iterations"] == 2
-
 
 
 def test_end_to_end_eda_pipeline_execution():
@@ -63,3 +61,24 @@ def test_end_to_end_eda_pipeline_execution():
     assert Path("artifacts/summary_statistics.csv").exists()
 
 
+def test_fastapi_endpoints():
+    client = TestClient(app)
+
+    # Health check
+    resp_health = client.get("/health")
+    assert resp_health.status_code == 200
+    assert resp_health.json()["status"] == "healthy"
+
+    # Analyze endpoint
+    resp_analyze = client.post(
+        "/api/analyze",
+        json={"file_path": "data/customer_churn.csv", "target_column": "Exited"},
+    )
+    assert resp_analyze.status_code == 200
+    job_id = resp_analyze.json()["job_id"]
+    assert job_id is not None
+
+    # Status check
+    resp_status = client.get(f"/api/status/{job_id}")
+    assert resp_status.status_code == 200
+    assert resp_status.json()["status"] in ["queued", "processing", "completed"]
