@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  # Streamlit Interactive Web Application
+  agentic-eda-ui:
+    build: .
+    container_name: agentic_eda_ui
+    ports:
+      - "8501:8501"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    volumes:
+      - ./data:/app/data
+      - ./artifacts:/app/artifacts
+    command: ["streamlit", "run", "app/ui.py", "--server.port=8501", "--server.address=0.0.0.0"]
+
+  # FastAPI REST API Backend
+  agentic-eda-api:
+    build: .
+    container_name: agentic_eda_api
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    volumes:
+      - ./data:/app/data
+      - ./artifacts:/app/artifacts
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
