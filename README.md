@@ -83,3 +83,93 @@ flowchart TD
 
 ### 1. Clone & Set Up Virtual Environment
 
+```bash
+# Clone the repository
+git clone <repo-url>
+cd "Agentic Pipeline to Automate EDA"
+
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 2. Environment Configuration (Optional)
+
+Copy the `.env.example` file:
+
+```bash
+cp .env.example .env
+```
+
+Set your LLM API keys if available:
+```env
+# Optional: system defaults to deterministic heuristic mode if keys are omitted
+GEMINI_API_KEY=your_gemini_api_key_here
+# or
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+---
+
+## 4. Usage Guide
+
+### 4.1 Command Line Interface (CLI)
+
+Run full end-to-end agentic EDA directly on any dataset:
+
+```bash
+# Run on sample churn dataset with target column
+python -m app.main --file data/customer_churn.csv --target Exited
+
+# Run unsupervised EDA without a target
+python -m app.main --file data/customer_churn.csv
+
+# Customize objective and feedback iterations
+python -m app.main --file data/customer_churn.csv --target Exited --objective "Analyze drivers of customer attrition" --iterations 2
+```
+
+The output summary prints directly to your console, and the generated interactive HTML report is saved to `artifacts/reports/eda_report.html`.
+
+### 4.2 Streamlit Interactive Web Studio
+
+Launch the interactive web UI:
+
+```bash
+streamlit run app/ui.py
+# Or:
+python -m app.main --ui
+```
+
+Access the studio at `http://localhost:8501`:
+1. Upload your CSV, Excel, or Parquet dataset (or choose the included customer churn dataset).
+2. Select your target variable (or let the system infer it).
+3. Click **Run Agentic EDA** to monitor step-by-step agent execution.
+4. Explore tabs for Data Quality, Schema, Statistics, Hypothesis Tests, Interactive Charts, and Download the standalone HTML report.
+
+### 4.3 FastAPI REST API
+
+Start the REST backend server:
+
+```bash
+python -m app.main --serve --port 8000
+```
+
+Access interactive Swagger documentation at `http://localhost:8000/docs`:
+- `GET /health`: Health status.
+- `POST /api/upload`: Upload dataset file.
+- `POST /api/analyze`: Trigger background EDA job.
+- `GET /api/status/{job_id}`: Poll job status.
+- `GET /api/report/{job_id}`: Fetch completed report (JSON or HTML).
+- `GET /api/artifacts/{filename}`: Download generated charts or reports.
+
+### 4.4 Docker & Docker Compose
+
+Run the entire application in isolated containers:
+
+```bash
+docker compose up --build
+```
+
