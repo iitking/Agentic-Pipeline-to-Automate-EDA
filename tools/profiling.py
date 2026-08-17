@@ -1,3 +1,4 @@
+"""Data profiling and schema inference module."""
 
 from pathlib import Path
 from typing import Any
@@ -7,6 +8,7 @@ import numpy as np
 
 
 def load_dataset(file_path: str | Path, max_rows: int | None = None) -> pd.DataFrame:
+    """Load a dataset from CSV, Excel, or Parquet format."""
     path = Path(file_path)
     if not path.exists():
         raise FileNotFoundError(f"Dataset file not found at: {path}")
@@ -37,6 +39,7 @@ def load_dataset(file_path: str | Path, max_rows: int | None = None) -> pd.DataF
 def detect_column_semantic_type(
     series: pd.Series, col_name: str, n_rows: int
 ) -> dict[str, Any]:
+    """Infer semantic type for a column: identifier, numerical, categorical, datetime, text, or boolean."""
     clean_series = series.dropna()
     n_unique = clean_series.nunique()
     unique_ratio = n_unique / max(len(clean_series), 1)
@@ -137,6 +140,7 @@ def detect_column_semantic_type(
 
 
 def infer_potential_target(df: pd.DataFrame, schema: dict[str, Any]) -> dict[str, Any] | None:
+    """Infer candidate target variable based on common target naming conventions and distributions."""
     candidate_keywords = [
         "target", "label", "class", "churn", "exited", "status", "outcome",
         "survived", "default", "attrition", "converted", "is_churn", "response",
@@ -199,6 +203,7 @@ def infer_potential_target(df: pd.DataFrame, schema: dict[str, Any]) -> dict[str
 
 
 def detect_schema(df: pd.DataFrame) -> dict[str, Any]:
+    """Detect complete dataset schema including types, nulls, cardinality and possible target."""
     n_rows, n_cols = df.shape
     columns_info: dict[str, Any] = {}
 
@@ -262,6 +267,7 @@ def detect_schema(df: pd.DataFrame) -> dict[str, Any]:
 
 
 def profile_dataset(file_path: str | Path, max_rows: int | None = None) -> dict[str, Any]:
+    """Generate comprehensive dataset profile and structural summary."""
     df = load_dataset(file_path, max_rows=max_rows)
     schema = detect_schema(df)
 
