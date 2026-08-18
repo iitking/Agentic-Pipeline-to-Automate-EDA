@@ -1,3 +1,4 @@
+"""Data quality auditing module."""
 
 from typing import Any
 import pandas as pd
@@ -5,6 +6,7 @@ import numpy as np
 
 
 def detect_missing_values(df: pd.DataFrame) -> list[dict[str, Any]]:
+    """Detect missing values across columns and evaluate severity."""
     findings = []
     n_rows = len(df)
     if n_rows == 0:
@@ -41,6 +43,7 @@ def detect_missing_values(df: pd.DataFrame) -> list[dict[str, Any]]:
 
 
 def detect_duplicates(df: pd.DataFrame, schema: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    """Detect exact duplicate rows and potential duplicate IDs."""
     findings = []
     n_rows = len(df)
     if n_rows == 0:
@@ -82,6 +85,7 @@ def detect_duplicates(df: pd.DataFrame, schema: dict[str, Any] | None = None) ->
 
 
 def detect_numerical_outliers(df: pd.DataFrame, schema: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    """Detect outliers using IQR (1.5*IQR) and robust Z-score methods."""
     findings = []
     n_rows = len(df)
     if n_rows < 10:
@@ -141,6 +145,7 @@ def detect_numerical_outliers(df: pd.DataFrame, schema: dict[str, Any] | None = 
 
 
 def detect_schema_anomalies(df: pd.DataFrame, schema: dict[str, Any]) -> list[dict[str, Any]]:
+    """Detect constant columns, high cardinality, and mixed types."""
     findings = []
     n_rows = len(df)
 
@@ -175,6 +180,7 @@ def detect_schema_anomalies(df: pd.DataFrame, schema: dict[str, Any]) -> list[di
 
 
 def calculate_data_quality_score(findings: list[dict[str, Any]], n_rows: int, n_cols: int) -> float:
+    """Calculate an overall dataset health score from 0 to 100."""
     score = 100.0
 
     severity_penalties = {
@@ -194,6 +200,7 @@ def calculate_data_quality_score(findings: list[dict[str, Any]], n_rows: int, n_
 
 
 def run_quality_audit(df: pd.DataFrame, schema: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Execute complete data quality audit."""
     if schema is None:
         from tools.profiling import detect_schema
         schema = detect_schema(df)
