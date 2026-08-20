@@ -1,3 +1,4 @@
+"""Deterministic statistical calculations and hypothesis testing module."""
 
 from typing import Any
 import pandas as pd
@@ -6,6 +7,7 @@ from scipy import stats
 
 
 def compute_descriptive_stats(df: pd.DataFrame, schema: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Compute comprehensive descriptive statistics for numerical and categorical variables."""
     results: dict[str, Any] = {"numerical": {}, "categorical": {}}
 
     # Numerical statistics
@@ -80,6 +82,7 @@ def compute_descriptive_stats(df: pd.DataFrame, schema: dict[str, Any] | None = 
 
 
 def compute_cramers_v(contingency_table: pd.DataFrame) -> float:
+    """Calculate Cramér's V association metric for two nominal categorical variables."""
     chi2, _, _, _ = stats.chi2_contingency(contingency_table)
     n = contingency_table.sum().sum()
     if n == 0:
@@ -95,6 +98,7 @@ def compute_cramers_v(contingency_table: pd.DataFrame) -> float:
 def compute_correlation_matrix(
     df: pd.DataFrame, schema: dict[str, Any] | None = None
 ) -> dict[str, Any]:
+    """Calculate Pearson and Spearman correlations for numeric columns, and Cramér's V for categorical."""
     numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
     if schema and "type_groups" in schema:
         id_cols = set(schema["type_groups"].get("identifier", []))
@@ -166,6 +170,7 @@ def compute_correlation_matrix(
 
 
 def test_normality(series: pd.Series) -> dict[str, Any]:
+    """Test normality using Shapiro-Wilk (n <= 5000) or D'Agostino-Pearson test."""
     clean = series.dropna()
     n = len(clean)
     if n < 8:
@@ -190,6 +195,7 @@ def test_normality(series: pd.Series) -> dict[str, Any]:
 def compare_two_groups(
     group1: pd.Series, group2: pd.Series, group1_name: str, group2_name: str, feature_name: str
 ) -> dict[str, Any]:
+    """Compare a continuous feature across two groups using t-test or Mann-Whitney U based on normality."""
     g1 = group1.dropna()
     g2 = group2.dropna()
     n1, n2 = len(g1), len(g2)
@@ -243,6 +249,7 @@ def compare_two_groups(
 
 
 def run_chi_square_test(series1: pd.Series, series2: pd.Series, name1: str, name2: str) -> dict[str, Any]:
+    """Perform Chi-square test of independence between two categorical variables."""
     ct = pd.crosstab(series1, series2)
     if ct.shape[0] < 2 or ct.shape[1] < 2:
         return {"test_name": "Chi-Square", "error": "Insufficient categories for 2D contingency table."}
@@ -269,6 +276,7 @@ def run_chi_square_test(series1: pd.Series, series2: pd.Series, name1: str, name
 def run_hypothesis_tests(
     df: pd.DataFrame, target_column: str | None = None, schema: dict[str, Any] | None = None
 ) -> list[dict[str, Any]]:
+    """Run suitable hypothesis tests comparing features against target or pairwise associations."""
     tests_performed: list[dict[str, Any]] = []
 
     if target_column and target_column in df.columns:
