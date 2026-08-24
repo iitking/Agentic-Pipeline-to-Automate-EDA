@@ -1,3 +1,4 @@
+"""Chart and visualization generation module using Plotly."""
 
 from pathlib import Path
 from typing import Any
@@ -8,12 +9,14 @@ import plotly.graph_objects as go
 
 
 def ensure_output_dir(dir_path: str | Path) -> Path:
+    """Ensure directory exists and return Path object."""
     p = Path(dir_path)
     p.mkdir(parents=True, exist_ok=True)
     return p
 
 
 def plot_missing_values(df: pd.DataFrame, output_dir: Path) -> dict[str, Any] | None:
+    """Generate missing values percentage bar chart."""
     null_counts = df.isnull().sum()
     null_cols = null_counts[null_counts > 0]
     if null_cols.empty:
@@ -53,6 +56,7 @@ def plot_missing_values(df: pd.DataFrame, output_dir: Path) -> dict[str, Any] | 
 def plot_correlation_heatmap(
     df: pd.DataFrame, output_dir: Path, schema: dict[str, Any] | None = None
 ) -> dict[str, Any] | None:
+    """Generate correlation heatmap for numeric features."""
     num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
     if schema and "type_groups" in schema:
         id_cols = set(schema["type_groups"].get("identifier", []))
@@ -93,6 +97,7 @@ def plot_correlation_heatmap(
 def plot_distributions(
     df: pd.DataFrame, output_dir: Path, schema: dict[str, Any] | None = None, max_plots: int = 4
 ) -> list[dict[str, Any]]:
+    """Generate histograms with boxplot marginals for key continuous features."""
     charts = []
     num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
     if schema and "type_groups" in schema:
@@ -134,6 +139,7 @@ def plot_distributions(
 def plot_categorical_breakdowns(
     df: pd.DataFrame, output_dir: Path, schema: dict[str, Any] | None = None, max_plots: int = 3
 ) -> list[dict[str, Any]]:
+    """Generate count bar plots for key categorical features."""
     charts = []
     cat_cols = df.select_dtypes(include=["object", "string", "category"]).columns.tolist()
     if schema and "type_groups" in schema:
@@ -179,6 +185,7 @@ def plot_categorical_breakdowns(
 def plot_target_relationships(
     df: pd.DataFrame, target_column: str, output_dir: Path, schema: dict[str, Any] | None = None
 ) -> list[dict[str, Any]]:
+    """Generate target-feature comparison plots."""
     charts = []
     if target_column not in df.columns:
         return charts
@@ -252,6 +259,7 @@ def generate_eda_charts(
     target_column: str | None = None,
     schema: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
+    """Generate complete suite of EDA visualizations."""
     out_dir = ensure_output_dir(output_dir)
     generated_charts: list[dict[str, Any]] = []
 
