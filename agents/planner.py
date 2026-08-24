@@ -1,3 +1,4 @@
+"""Planning Agent responsible for dynamic task selection and workflow orchestration."""
 
 from typing import Any
 import json
@@ -7,11 +8,13 @@ from workflow.llm_client import LLMClient
 
 
 class PlannerAgent:
+    """Creates a structured, adaptive analysis plan based on dataset profile and goals."""
 
     def __init__(self, llm_client: LLMClient | None = None):
         self.llm = llm_client or LLMClient()
 
     def _generate_heuristic_plan(self, state: EDAState) -> dict[str, Any]:
+        """Generate deterministic, expert analysis plan tailored to dataset characteristics."""
         profile = state.get("data_profile", {})
         schema = state.get("schema", {})
         target = state.get("target_column")
@@ -63,6 +66,7 @@ class PlannerAgent:
         }
 
     def run(self, state: EDAState) -> dict[str, Any]:
+        """Construct analysis plan using LLM or rule-based planner."""
         profile = state.get("data_profile", {})
         target = state.get("target_column")
         obj = state.get("user_objective", "Complete comprehensive EDA")
