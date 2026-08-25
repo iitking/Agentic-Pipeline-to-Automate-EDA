@@ -1,3 +1,4 @@
+"""Validation Agent auditing claims against ground truth analytics."""
 
 import re
 from typing import Any
@@ -7,11 +8,13 @@ from workflow.llm_client import LLMClient
 
 
 class ValidationAgent:
+    """Audits insights and claims against calculated ground truth values to prevent hallucination and false causality."""
 
     def __init__(self, llm_client: LLMClient | None = None):
         self.llm = llm_client or LLMClient()
 
     def _sanitize_causal_language(self, text: str) -> tuple[str, bool]:
+        """Detect and sanitize unjustified causal language into associative language."""
         causal_replacements = [
             (r"\bcauses\b", "is associated with"),
             (r"\bcaused\b", "was associated with"),
@@ -29,6 +32,7 @@ class ValidationAgent:
         return modified, had_causal
 
     def _validate_heuristic(self, state: EDAState) -> dict[str, Any]:
+        """Rule-based verification of numerical metrics and claim sanity."""
         insights = state.get("validated_insights", [])
         warnings = list(state.get("warnings", []))
         discrepancies = []
@@ -65,6 +69,7 @@ class ValidationAgent:
         }
 
     def run(self, state: EDAState) -> dict[str, Any]:
+        """Validate findings against ground-truth outputs."""
         heuristic_res = self._validate_heuristic(state)
 
         # If LLM is available, perform additional validation check
