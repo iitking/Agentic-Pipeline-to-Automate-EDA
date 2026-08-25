@@ -1,3 +1,4 @@
+"""Insight Synthesis and Reporting Agent."""
 
 from typing import Any
 from workflow.state import EDAState
@@ -6,11 +7,13 @@ from workflow.llm_client import LLMClient
 
 
 class InsightAgent:
+    """Agent that translates statistical outputs into evidence-backed business insights and recommendations."""
 
     def __init__(self, llm_client: LLMClient | None = None):
         self.llm = llm_client or LLMClient()
 
     def _generate_heuristic_insights(self, state: EDAState) -> dict[str, Any]:
+        """Generate deterministic, statistically grounded insights when LLM is unavailable."""
         profile = state.get("data_profile", {})
         quality_findings = state.get("quality_findings", [])
         quality_score = state.get("quality_score", 100.0)
@@ -117,6 +120,7 @@ class InsightAgent:
         }
 
     def run(self, state: EDAState) -> dict[str, Any]:
+        """Synthesize verified insights and actionable next steps."""
         heuristic_res = self._generate_heuristic_insights(state)
 
         # If LLM available, enhance with LLM synthesis
