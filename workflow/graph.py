@@ -1,3 +1,4 @@
+"""LangGraph agentic workflow graph compiling EDA nodes, conditional loops, and state transitions."""
 
 from pathlib import Path
 from typing import Any, Literal
@@ -29,38 +30,47 @@ report_generator = ReportGenerator()
 
 # Node functions
 def profile_dataset_node(state: EDAState) -> dict[str, Any]:
+    """Node: Ingest dataset and infer schema and profile."""
     return dataset_agent.run(state)
 
 
 def plan_analysis_node(state: EDAState) -> dict[str, Any]:
+    """Node: Construct structured plan based on profile and objective."""
     return planner_agent.run(state)
 
 
 def run_quality_checks_node(state: EDAState) -> dict[str, Any]:
+    """Node: Audit missing values, duplicates, outliers, and schema."""
     return quality_agent.run(state)
 
 
 def run_statistical_analysis_node(state: EDAState) -> dict[str, Any]:
+    """Node: Compute summary statistics and correlations."""
     return statistics_agent.run(state)
 
 
 def generate_visualizations_node(state: EDAState) -> dict[str, Any]:
+    """Node: Create interactive charts."""
     return visualization_agent.run(state)
 
 
 def analyze_relationships_node(state: EDAState) -> dict[str, Any]:
+    """Node: Explore feature interactions and hypothesis tests."""
     return relationship_agent.run(state)
 
 
 def synthesize_insights_node(state: EDAState) -> dict[str, Any]:
+    """Node: Translate analytics into evidence-backed findings."""
     return insight_agent.run(state)
 
 
 def validate_findings_node(state: EDAState) -> dict[str, Any]:
+    """Node: Verify claims against tools and decide on continuation."""
     return validation_agent.run(state)
 
 
 def generate_report_node(state: EDAState) -> dict[str, Any]:
+    """Node: Compile HTML report and save all machine-readable artifacts."""
     report_path = report_generator.generate_report(state)
     return {
         "final_report_path": report_path,
@@ -69,6 +79,7 @@ def generate_report_node(state: EDAState) -> dict[str, Any]:
 
 
 def should_continue_condition(state: EDAState) -> Literal["plan_analysis", "generate_report"]:
+    """Conditional router: loop back to plan if further analysis is needed and iteration budget allows."""
     requires_more = state.get("requires_further_analysis", False)
     current_iter = state.get("iteration", 0)
     max_iter = state.get("max_iterations", 2)
@@ -82,6 +93,7 @@ def should_continue_condition(state: EDAState) -> Literal["plan_analysis", "gene
 
 
 def build_eda_graph() -> StateGraph:
+    """Build and compile the LangGraph workflow."""
     workflow = StateGraph(EDAState)
 
     # Register nodes
@@ -126,6 +138,7 @@ def run_eda_pipeline(
     user_objective: str = "Perform comprehensive exploratory data analysis, evaluate quality, and generate insights.",
     max_iterations: int = 2,
 ) -> EDAState:
+    """Execute end-to-end agentic EDA pipeline on a dataset."""
     initial_state = create_initial_state(
         dataset_path=dataset_path,
         target_column=target_column,
