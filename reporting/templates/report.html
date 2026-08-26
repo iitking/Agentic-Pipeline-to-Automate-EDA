@@ -298,3 +298,13 @@
             <strong>Agentic EDA Safety Guarantee:</strong> All calculations, metrics, and hypothesis tests were produced deterministically using verified Python libraries (Pandas, SciPy, NumPy). The Planning and Reporting Agents operate with strict mathematical verification; no statistics were hallucinated or derived from unrestricted code execution.
         </div>
         <div style="font-size: 0.85rem; color: var(--text-muted);">
+            Iteration Cycles: {{ state.iteration + 1 }} / {{ state.max_iterations }} | Validation Status: {{ 'Passed' if state.validation_passed else 'Needs Review' }}
+        </div>
+    </section>
+
+    <footer>
+        Generated automatically by Agentic Pipeline to Automate EDA | LangGraph & Python Powered
+    </footer>
+</div>
+</body>
+</html>
