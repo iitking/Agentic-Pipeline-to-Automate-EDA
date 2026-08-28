@@ -148,3 +148,16 @@ def get_job_report(job_id: str, format: str = "json"):
         "report_path": result.get("final_report_path"),
     }
 
+
+@router.get("/api/artifacts/{filename}")
+def download_artifact(filename: str):
+    """Download a generated artifact from artifacts directory."""
+    path = Path("artifacts") / filename
+    if not path.exists():
+        path = Path("artifacts/reports") / filename
+    if not path.exists():
+        path = Path("artifacts/charts") / filename
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Artifact file not found")
+
+    return FileResponse(path)
