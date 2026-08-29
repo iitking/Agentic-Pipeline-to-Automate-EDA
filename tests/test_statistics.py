@@ -1,3 +1,4 @@
+"""Unit tests for statistical calculations and hypothesis testing."""
 
 import pytest
 import pandas as pd

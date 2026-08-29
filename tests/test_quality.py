@@ -1,3 +1,4 @@
+"""Unit tests for data quality auditing module."""
 
 import pytest
 import pandas as pd

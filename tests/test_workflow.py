@@ -1,3 +1,4 @@
+"""Integration and workflow tests for the Agentic EDA pipeline."""
 
 from pathlib import Path
 import pytest
