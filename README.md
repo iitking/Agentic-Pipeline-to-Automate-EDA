@@ -173,3 +173,154 @@ Run the entire application in isolated containers:
 docker compose up --build
 ```
 
+- Streamlit Web App: `http://localhost:8501`
+- FastAPI REST Backend: `http://localhost:8000`
+
+---
+
+## 5. Agent Responsibilities
+
+| Agent | Module | Responsibilities |
+|---|---|---|
+| **Dataset Understanding** | `agents/dataset_agent.py` | Detects data types, cardinality, missingness, and infers candidate targets. |
+| **Planning Agent** | `agents/planner.py` | Adapts analysis plan based on dataset profile and user objectives. |
+| **Data Quality Agent** | `agents/quality_agent.py` | Flags missing values, duplicates, outliers, zero variance, and calculates quality score (0-100). |
+| **Statistical Analysis** | `agents/statistics_agent.py` | Computes descriptive statistics, distributions, skewness, and correlation matrices. |
+| **Visualization Agent** | `agents/visualization_agent.py` | Produces interactive Plotly charts (histograms, boxplots, heatmaps, counts). |
+| **Relationship Agent** | `agents/relationship_agent.py` | Analyzes target class balance and executes hypothesis tests (t-test, Mann-Whitney U, Chi-square). |
+| **Validation Agent** | `agents/validation_agent.py` | Cross-verifies claims against calculated ground truth and sanitizes causal overstatements. |
+| **Insight & Reporting** | `agents/insight_agent.py` | Synthesizes verified findings and actionable preprocessing recommendations. |
+
+---
+
+## 6. Agentic Workflow & Feedback Loop
+
+Unlike fixed static notebooks, the agentic pipeline uses a stateful feedback loop orchestrated by **LangGraph**:
+
+1. **Ingest & Profile:** Calculate schema, data types, missingness, and cardinality.
+2. **Plan:** The Planning Agent selects approved analysis tasks tailored to the profile.
+3. **Execute:** Deterministic Python tools execute allowlisted calculations.
+4. **Synthesize:** Insights are generated citing exact numerical evidence.
+5. **Validate:** The Validation Agent checks claims against ground truth. If quality issues warrant deeper investigation and the iteration budget allows, the workflow loops back to refine the plan.
+6. **Report:** Generates the final HTML report and exports structured artifacts.
+
+---
+
+## 7. Project Structure
+
+```text
+agentic-eda/
+├── app/
+│   ├── main.py                  # CLI and server entry points
+│   ├── ui.py                    # Streamlit interactive dashboard
+│   └── api/
+│       └── routes.py            # FastAPI REST endpoints
+├── agents/
+│   ├── planner.py               # Planning Agent
+│   ├── dataset_agent.py         # Dataset Understanding Agent
+│   ├── quality_agent.py         # Data Quality Agent
+│   ├── statistics_agent.py      # Statistical Analysis Agent
+│   ├── visualization_agent.py   # Visualization Agent
+│   ├── relationship_agent.py    # Relationship Analysis Agent
+│   ├── insight_agent.py         # Insight Synthesis Agent
+│   └── validation_agent.py      # Validation & Ground-truth Audit Agent
+├── tools/
+│   ├── profiling.py             # Schema detection & data ingestion
+│   ├── data_quality.py          # Missingness, duplicates, outlier detection
+│   ├── statistical_tests.py     # Summary stats, correlations, hypothesis tests
+│   ├── chart_generator.py       # Plotly chart generation
+│   └── safe_executor.py         # Sandboxed allowlist tool dispatcher
+├── workflow/
+│   ├── graph.py                 # LangGraph state machine & feedback loop
+│   ├── state.py                 # TypedDict shared state definition
+│   ├── prompts.py               # Agent prompt templates
+│   └── llm_client.py            # Unified LLM provider (Gemini, OpenAI, Heuristic)
+├── reporting/
+│   ├── report_generator.py      # HTML and artifact export compiler
+│   └── templates/
+│       └── report.html          # Jinja2 modern responsive report template
+├── tests/
+│   ├── test_quality.py          # Unit tests for data quality audit
+│   ├── test_statistics.py       # Unit tests for statistical calculations
+│   └── test_workflow.py         # End-to-end integration & API tests
+├── data/
+│   ├── customer_churn.csv       # Sample benchmark dataset
+│   └── .gitkeep
+├── artifacts/
+│   └── .gitkeep                 # Output charts, reports, and JSON summaries
+├── .github/
+│   └── workflows/
+│       └── ci.yml               # GitHub Actions CI matrix
+├── Dockerfile                   # Container specification
+├── docker-compose.yml           # Multi-container orchestration
+├── requirements.txt             # Project dependencies
+├── .env.example                 # Environment variable template
+├── .gitignore                   # Git exclusion rules
+└── README.md                    # Project documentation
+```
+
+---
+
+## 8. Shared State Design
+
+The agents communicate via a typed dictionary state:
+
+```python
+class EDAState(TypedDict, total=False):
+    dataset_path: str
+    dataset_name: str
+    target_column: str | None
+    user_objective: str
+    schema: dict[str, Any]
+    data_profile: dict[str, Any]
+    quality_findings: list[dict[str, Any]]
+    quality_score: float
+    analysis_plan: list[dict[str, Any]]
+    plan_reasoning: str
+    statistical_results: dict[str, Any]
+    relationship_results: dict[str, Any]
+    hypothesis_test_results: list[dict[str, Any]]
+    chart_paths: list[str]
+    chart_metadata: list[dict[str, Any]]
+    validated_insights: list[dict[str, Any]]
+    actionable_recommendations: list[dict[str, Any]]
+    warnings: list[str]
+    validation_passed: bool
+    requires_further_analysis: bool
+    iteration: int
+    max_iterations: int
+    final_report_path: str
+```
+
+---
+
+## 9. Safety, Sandboxing & Reliability
+
+- **No Arbitrary Code Execution:** The system never evaluates unverified LLM-generated Python or shell code. Tools are invoked strictly through `SafeExecutor` with an explicit allowlist.
+- **Hallucination Prevention:** The Validation Agent checks reported statistics directly against calculation outputs.
+- **Causality Sanitization:** Phrases implying causality ("causes", "drives") are flagged and replaced with associative terms ("correlates with", "is associated with").
+- **Offline / Deterministic Fallback:** Runs reliably in offline environments without external API keys using built-in statistical heuristics.
+
+---
+
+## 10. Evaluation Strategy
+
+| Metric | What it measures | Target |
+|---|---|---|
+| **Finding Correctness** | Numerical claims match computed results | 100% |
+| **Analysis Coverage** | Schema, quality, stats, charts, and target coverage | Complete |
+| **Unsupported-Claim Rate** | Percentage of claims without supporting evidence | 0% |
+| **Task Success Rate** | Pipeline completion without unhandled exceptions | 100% |
+| **Reproducibility** | Deterministic outputs across multiple runs on identical data | Guaranteed |
+
+---
+
+## 11. Testing & CI/CD
+
+Run the test suite:
+
+```bash
+pytest -v tests/
+```
+
+Automated GitHub Actions CI runs across Python 3.11 and Python 3.12 on every push and pull request.
